@@ -1,26 +1,35 @@
 @import "tailwindcss";
 
+/* ---------- Theme tokens (Tailwind v4) ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Site-wide defaults */
+  --background: #e7e5e4; /* stone-200 */
+  --foreground: #1c1917; /* stone-900 */
 }
 
+/* Expose the tokens to Tailwind utilities like bg-background / text-foreground */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* fonts (keep your existing) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* NOTE:
+   Remove the prefers-color-scheme override so bg-background
+   doesn't flip to black in dark mode. If you later want a dark
+   theme, use a class/attribute toggle instead of system media.
+*/
+
+/* ---------- Base element styles ---------- */
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Use the theme tokens via Tailwind utilities */
+  @apply bg-background text-foreground font-sans;
 }

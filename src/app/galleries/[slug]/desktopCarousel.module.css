@@ -1,0 +1,30 @@
+@keyframes fadeSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Public classes exported as CSS-module tokens */
+.fadeSlideInRight {
+  animation: fadeSlideInRight 450ms ease-out;
+}
+
+.fadeSlideInLeft {
+  animation: fadeSlideInLeft 450ms ease-out;
+}

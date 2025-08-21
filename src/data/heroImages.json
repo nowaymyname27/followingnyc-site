@@ -1,0 +1,78 @@
+{
+  "images": [
+    {
+      "id": "fs-001",
+      "title": "Sunrise Over Midtown",
+      "src": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["fullscreen", "sideImage"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+    {
+      "id": "fs-002",
+      "title": "Taxi Stream on 5th Ave",
+      "src": "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["fullscreen"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+    {
+      "id": "fs-003",
+      "title": "Reservoir Dawn, Central Park",
+      "src": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["fullscreen"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+
+    {
+      "id": "side-001",
+      "title": "Manhattan Bridge Frame",
+      "src": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["sideImage"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+    {
+      "id": "side-002",
+      "title": "Chelsea Golden Hour",
+      "src": "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["sideImage"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+
+    {
+      "id": "tri-001",
+      "title": "Street Portrait",
+      "src": "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["tripleColumn"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+    {
+      "id": "tri-003",
+      "title": "Dusk Silhouette",
+      "src": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["tripleColumn"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    },
+    {
+      "id": "tri-004",
+      "title": "Urban Texture",
+      "src": "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?q=80&w=2400&auto=format&fit=crop",
+      "modes": ["tripleColumn"],
+      "activeFrom": null,
+      "activeTo": null,
+      "weight": 1
+    }
+  ]
+}

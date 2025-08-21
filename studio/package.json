@@ -1,0 +1,17 @@
+{
+  "name": "studio",
+  "private": true,
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build --minify",
+    "start": "sanity start"
+  },
+  "dependencies": {
+    "@sanity/vision": "^4.5.0",
+    "sanity": "^4.5.0",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@sanity/cli": "^3.60.0"
+  }
+}
