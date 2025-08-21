@@ -3,67 +3,43 @@ export default {
   title: "Collection",
   type: "document",
   fields: [
-    {
-      name: "title",
-      title: "Title",
-      type: "string",
-      validation: (Rule) => Rule.required(),
-    },
+    { name: "title", type: "string", validation: (Rule) => Rule.required() },
     {
       name: "slug",
-      title: "Slug",
       type: "slug",
       options: { source: "title", maxLength: 96 },
       validation: (Rule) => Rule.required(),
     },
     {
       name: "year",
-      title: "Year",
       type: "number",
-      validation: (Rule) => Rule.required().integer().min(1900).max(2100),
+      validation: (Rule) => Rule.integer().min(1900).max(2100),
     },
-    {
-      name: "description",
-      title: "Description",
-      type: "text",
-    },
+    { name: "description", type: "text" },
     {
       name: "coverImage",
-      title: "Cover Image",
       type: "image",
       options: { hotspot: true },
+      validation: (Rule) => Rule.required(),
     },
+    // optional: a few hand-picked images to show on the collection page
     {
-      name: "photos",
-      title: "Photos",
+      name: "featuredPhotos",
+      title: "Featured Photos",
       type: "array",
       of: [{ type: "reference", to: [{ type: "photo" }] }],
-      options: { sortable: true },
-      validation: (Rule) => Rule.min(1).error("Add at least one photo."),
     },
     {
       name: "tags",
-      title: "Tags (optional)",
       type: "array",
       of: [{ type: "reference", to: [{ type: "tag" }] }],
     },
-    {
-      name: "published",
-      title: "Published",
-      type: "boolean",
-      initialValue: true,
-    },
+    { name: "published", type: "boolean", initialValue: true },
   ],
   preview: {
-    select: {
-      title: "title",
-      media: "coverImage",
-      count: "photos.length",
-      year: "year",
-    },
-    prepare({ title, media, count, year }) {
-      const qty = count ? `${count} photo${count === 1 ? "" : "s"}` : "Empty";
-      return { title, subtitle: `${year ?? "—"} • ${qty}`, media };
+    select: { title: "title", media: "coverImage", year: "year" },
+    prepare({ title, media, year }) {
+      return { title, subtitle: year || "—", media };
     },
   },
 };

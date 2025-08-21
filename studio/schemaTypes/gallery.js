@@ -1,62 +1,43 @@
-// /schemas/gallery.js
 export default {
   name: "gallery",
   title: "Gallery",
   type: "document",
   fields: [
-    {
-      name: "title",
-      title: "Title",
-      type: "string",
-      validation: (Rule) => Rule.required(),
-    },
+    { name: "title", type: "string", validation: (Rule) => Rule.required() },
     {
       name: "slug",
-      title: "Slug",
       type: "slug",
       options: { source: "title", maxLength: 96 },
       validation: (Rule) => Rule.required(),
     },
     {
       name: "year",
-      title: "Year",
       type: "number",
-      validation: (Rule) =>
-        Rule.integer().min(1900).max(2100).error("Enter a valid year"),
+      validation: (Rule) => Rule.integer().min(1900).max(2100),
     },
-    {
-      name: "description",
-      title: "Description",
-      type: "text",
-    },
+    { name: "description", type: "text" },
     {
       name: "coverImage",
-      title: "Cover Image",
       type: "image",
       options: { hotspot: true },
       validation: (Rule) => Rule.required(),
     },
     {
-      name: "photos",
-      title: "Photos",
+      name: "items",
+      title: "Gallery Items",
       type: "array",
-      of: [{ type: "reference", to: [{ type: "photo" }] }],
-      options: { sortable: true },
-      validation: (Rule) => Rule.min(1).error("Add at least one photo."),
+      of: [{ type: "galleryItem" }],
+      validation: (Rule) => Rule.min(1),
     },
     {
       name: "tags",
-      title: "Tags (optional)",
       type: "array",
       of: [{ type: "reference", to: [{ type: "tag" }] }],
     },
+    { name: "published", type: "boolean", initialValue: true },
   ],
   preview: {
-    select: {
-      title: "title",
-      media: "coverImage",
-      description: "description",
-    },
+    select: { title: "title", media: "coverImage", description: "description" },
     prepare({ title, media, description }) {
       const subtitle = description
         ? `${description.slice(0, 80)}${description.length > 80 ? "…" : ""}`

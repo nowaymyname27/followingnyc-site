@@ -3,11 +3,6 @@ export default {
   title: "Tag",
   type: "document",
   fields: [
-    {
-      name: "label",
-      title: "Label",
-      type: "string",
-      validation: (Rule) => Rule.required(),
-    },
+    { name: "label", type: "string", validation: (Rule) => Rule.required() },
   ],
 };

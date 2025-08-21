@@ -3,33 +3,32 @@ export default {
   title: "Photo",
   type: "document",
   fields: [
-    {
-      name: "title",
-      title: "Title",
-      type: "string",
-      validation: (Rule) => Rule.required(),
-    },
+    { name: "title", type: "string" }, // optional, since bulk uploads shouldn’t require it
     {
       name: "image",
-      title: "Image",
       type: "image",
       options: { hotspot: true },
+      validation: (Rule) => Rule.required(),
     },
-    {
-      name: "description",
-      title: "Description",
-      type: "text",
-    },
+    { name: "description", type: "text" },
     {
       name: "tags",
-      title: "Tags",
       type: "array",
       of: [{ type: "reference", to: [{ type: "tag" }] }],
     },
+    { name: "capturedAt", title: "Capture Date", type: "datetime" },
+    // key change: point to the parent collection so we don’t maintain giant arrays
     {
-      name: "captureAt",
-      title: "Capture Date",
-      type: "datetime",
+      name: "collection",
+      title: "Parent Collection",
+      type: "reference",
+      to: [{ type: "collection" }],
     },
   ],
+  preview: {
+    select: { title: "title", media: "image", coll: "collection.title" },
+    prepare({ title, media, coll }) {
+      return { title: title || "Untitled photo", subtitle: coll || "—", media };
+    },
+  },
 };
