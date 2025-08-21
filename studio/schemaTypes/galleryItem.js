@@ -3,15 +3,33 @@ export default {
   title: "Gallery Item",
   type: "object",
   fields: [
-    // either reference a photo...
-    { name: "photo", type: "reference", to: [{ type: "photo" }] },
-    // ...or embed a one-off image without creating a photo document
-    { name: "image", type: "image", options: { hotspot: true } },
-    // per-gallery overrides (shown on this gallery only)
-    { name: "titleOverride", type: "string" },
-    { name: "descriptionOverride", type: "text" },
-    { name: "yearOverride", type: "number" },
+    {
+      name: "photo",
+      title: "Photo (reference)",
+      type: "reference",
+      to: [{ type: "photo" }],
+    },
+    {
+      name: "image",
+      title: "Or upload image",
+      type: "image",
+      options: { hotspot: true },
+    },
+    { name: "titleOverride", title: "Title (override)", type: "string" },
+    {
+      name: "descriptionOverride",
+      title: "Description (override)",
+      type: "text",
+    },
+    { name: "yearOverride", title: "Year (override)", type: "number" },
   ],
+  // Optional: require at least one of photo or image
+  validation: (Rule) =>
+    Rule.custom((val) =>
+      val?.photo || val?.image
+        ? true
+        : "Add a Photo reference or upload an Image"
+    ),
   preview: {
     select: {
       t: "titleOverride",
