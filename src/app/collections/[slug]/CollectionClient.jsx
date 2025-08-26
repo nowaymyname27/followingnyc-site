@@ -1,13 +1,28 @@
 // app/collections/[slug]/CollectionClient.jsx
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import PhotoMasonry from "../components/PhotoMasonry";
 import LightboxOverlay from "../components/LightboxOverlay";
 
 export default function CollectionClient({ collection }) {
-  const { title, year, photos = [] } = collection || {};
+  const { title, year, items = [] } = collection || {};
+
+  // Adapt items (url/alt/title/description/…) to the photos shape your UI expects
+  const photos = useMemo(
+    () =>
+      (items || []).map((i, idx) => ({
+        id: i._key ?? `${idx}`,
+        url: i.url,
+        alt: i.alt || "Photo",
+        title: i.title ?? null,
+        description: i.description ?? "",
+        capturedAt: i.capturedAt ?? null,
+        tags: i.tags || [],
+      })),
+    [items]
+  );
 
   // Lightbox state
   const [open, setOpen] = useState(false);
@@ -19,17 +34,6 @@ export default function CollectionClient({ collection }) {
   }, []);
   const close = useCallback(() => setOpen(false), []);
 
-  // Lock scroll when modal is open (defensive; overlay also locks)
-  useEffect(() => {
-    if (!open) return;
-    const prevStyle = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevStyle;
-    };
-  }, [open]);
-
-  // Precompute (optional) suggested filename numbers
   const total = photos.length;
   const indexLabel = useMemo(
     () =>
@@ -70,12 +74,12 @@ export default function CollectionClient({ collection }) {
         </div>
       </header>
 
-      {/* Masonry stream (ALL photos) */}
+      {/* Masonry stream (ALL items) */}
       <main className="mx-auto max-w-[1400px] px-3 sm:px-6 lg:px-10 pb-12">
         <PhotoMasonry photos={photos} onOpen={openAt} />
       </main>
 
-      {/* Lightbox Overlay (no over-image arrows; external controls under placard on desktop) */}
+      {/* Lightbox Overlay */}
       <LightboxOverlay
         open={open}
         photos={photos}

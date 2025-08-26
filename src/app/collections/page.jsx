@@ -1,31 +1,42 @@
 // app/collections/page.jsx
 import { sanityClient } from "@/lib/sanity.client";
-import CollectionsClient from "./CollectionsClient";
 import NavBarLight from "@/components/NavBarLight";
+import CollectionsClient from "./CollectionsClient";
 
 export const revalidate = 60;
 
-const query = `
-*[_type=="collection" && defined(year) && (published != false)]{
+// Fetch all collections (published), newest year first, then title.
+const query = /* groq */ `
+*[_type == "collection" && (published != false)] 
+| order(coalesce(year, 0) desc, title asc) {
   _id,
   title,
   year,
   "slug": slug.current,
-  "cover": coverImage.asset->url,
-  "count": coalesce(length(photos), 0)
-} | order(year desc, title asc)
+  // Prefer explicit coverImage; otherwise fall back to first item (embedded image or photo ref)
+  "coverUrl": coalesce(
+    coverImage.asset->url,
+    items[0].image.asset->url,
+    items[0].photo->image.asset->url
+  ),
+  "count": count(items)
+}
 `;
 
 async function getCollections() {
   const rows = await sanityClient.fetch(query);
-  return rows.map((r) => ({
-    id: r._id, // keep the internal id if you need it later
-    slug: r.slug, // explicit slug for routing
-    title: r.title,
-    year: r.year,
-    count: r.count ?? 0,
-    cover: r.cover || "",
+
+  // Normalize to the shape CollectionsClient expects: albums[]
+  const albums = (rows || []).map((c) => ({
+    id: c._id,
+    title: c.title,
+    year: c.year ?? null,
+    slug: c.slug,
+    coverUrl: c.coverUrl || null,
+    count: typeof c.count === "number" ? c.count : 0,
   }));
+
+  return albums;
 }
 
 export default async function Page() {
@@ -33,13 +44,10 @@ export default async function Page() {
 
   return (
     <>
-      {/* White shim so the floating nav never shows a dark band above */}
+      {/* keep navbar consistent with your inner pages */}
       <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
-
-      {/* Solid white / black-text navbar for inner pages */}
       <NavBarLight />
 
-      {/* Content padded to clear fixed nav */}
       <div className="pt-24 bg-background text-black">
         <CollectionsClient albums={albums} />
       </div>

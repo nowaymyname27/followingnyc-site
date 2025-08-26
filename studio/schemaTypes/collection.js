@@ -18,17 +18,22 @@ export default {
     { name: "description", type: "text" },
     {
       name: "coverImage",
+      title: "Cover Image",
       type: "image",
       options: { hotspot: true },
       validation: (Rule) => Rule.required(),
     },
-    // optional: a few hand-picked images to show on the collection page
+
+    // NEW: curated array of items (like gallery.items)
     {
-      name: "featuredPhotos",
-      title: "Featured Photos",
+      name: "items",
+      title: "Collection Items",
       type: "array",
-      of: [{ type: "reference", to: [{ type: "photo" }] }],
+      of: [{ type: "collectionItem" }],
+      options: { sortable: true },
+      validation: (Rule) => Rule.min(1).error("Add at least one item."),
     },
+
     {
       name: "tags",
       type: "array",
@@ -37,9 +42,15 @@ export default {
     { name: "published", type: "boolean", initialValue: true },
   ],
   preview: {
-    select: { title: "title", media: "coverImage", year: "year" },
-    prepare({ title, media, year }) {
-      return { title, subtitle: year || "—", media };
+    select: {
+      title: "title",
+      media: "coverImage",
+      year: "year",
+      count: "items.length",
+    },
+    prepare({ title, media, year, count }) {
+      const qty = count ? `${count} image${count === 1 ? "" : "s"}` : "Empty";
+      return { title, subtitle: `${year ?? "—"} • ${qty}`, media };
     },
   },
 };

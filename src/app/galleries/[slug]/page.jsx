@@ -6,10 +6,8 @@ import GalleryCarouselClient from "./GalleryCarouselClient";
 
 export const revalidate = 60;
 
-/**
- * Adjust field names if your schema differs (e.g., mainImage vs image).
- */
-const query = `
+// Supports NEW schema (items[] of galleryItem) and falls back to OLD photos/images
+const query = /* groq */ `
 *[_type=="gallery" && slug.current==$slug][0]{
   _id,
   title,
@@ -17,20 +15,29 @@ const query = `
   description,
   "slug": slug.current,
 
-  // Prefer a referenced photo list if present:
+  // NEW: curated items with overrides
+  "items": items[]{
+    _key,
+    // resolve an image whether it's embedded or via photo reference
+    "url": coalesce(image.asset->url, photo->image.asset->url),
+    // per-item fields with sensible fallbacks
+    "title": coalesce(titleOverride, photo->title),
+    "description": coalesce(descriptionOverride, photo->description),
+    "alt": coalesce(titleOverride, photo->title, "Photo")
+  },
+
+  // OLD: for backward compatibility if you still have these
   "photosRef": photos[]->{
     _id,
     title,
     description,
-    "url": coalesce(image.asset->url, mainImage.asset->url),
-    "alt": coalesce(alt, title)
+    "url": image.asset->url,
+    "alt": coalesce(alt, title, "Photo")
   },
-
-  // Fallback: inline images[] array
   "photosInline": images[]{
     _key,
     "url": asset->url,
-    "alt": coalesce(alt, caption),
+    "alt": coalesce(alt, caption, "Photo"),
     "title": coalesce(title, caption),
     "description": caption
   }
@@ -41,13 +48,18 @@ async function getGallery(slug) {
   const data = await sanityClient.fetch(query, { slug });
   if (!data) return null;
 
-  const photosRaw =
-    (data.photosRef && data.photosRef.length
-      ? data.photosRef
-      : data.photosInline) || [];
+  const raw =
+    (Array.isArray(data.items) && data.items.length && data.items) ||
+    (Array.isArray(data.photosRef) &&
+      data.photosRef.length &&
+      data.photosRef) ||
+    (Array.isArray(data.photosInline) &&
+      data.photosInline.length &&
+      data.photosInline) ||
+    [];
 
-  const photos = photosRaw
-    .filter((p) => !!p?.url)
+  const photos = raw
+    .filter((p) => p && p.url)
     .map((p, i) => ({
       id: p._id || p._key || `${i}`,
       url: p.url,

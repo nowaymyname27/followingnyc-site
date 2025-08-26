@@ -51,20 +51,20 @@ export default function ArtWallOverlay({
       tabIndex={-1}
       ref={dialogRef}
       className="fixed inset-0 z-50"
-      onClick={onClose}
+      onClick={onClose} // clicking the backdrop closes
     >
       {/* Subtle museum-like backdrop */}
       <div className="absolute inset-0 bg-background/95" />
 
       {/* Content row: artwork left, placard right (stack on mobile) */}
-      <div
-        className="absolute inset-0 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="absolute inset-0 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-8 items-center">
-          {/* Artwork */}
+          {/* Artwork (clicking the image should NOT close) */}
           <div className="relative flex justify-center">
-            <div className="relative inline-block border border-black shadow-[0_12px_40px_rgba(0,0,0,0.15)] will-change-transform transition-transform duration-300 ease-out scale-100 md:scale-[1.02]">
+            <div
+              className="relative inline-block border border-black shadow-[0_12px_40px_rgba(0,0,0,0.15)] will-change-transform transition-transform duration-300 ease-out scale-100 md:scale-[1.02]"
+              onClick={(e) => e.stopPropagation()} // prevent backdrop close
+            >
               <img
                 src={photo.url}
                 alt={photo.alt || "Artwork"}
@@ -74,8 +74,8 @@ export default function ArtWallOverlay({
             </div>
           </div>
 
-          {/* Placard (museum label) + controls */}
-          <div className="relative">
+          {/* Placard (museum label) + controls (should NOT close) */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <div className="rounded-2xl border border-black bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <h2 className="text-lg font-semibold">

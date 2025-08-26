@@ -5,6 +5,26 @@ import * as React from "react";
 import styles from "../lightbox.module.css";
 import { useKeyNav } from "../hooks/useKeyNav";
 
+// Robust scroll lock: toggles both <html> and <body>
+function useScrollLock(locked) {
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+
+    if (locked) {
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+    }
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+    };
+  }, [locked]);
+}
+
 export default function LightboxOverlay({
   open,
   photos = [],
@@ -25,16 +45,13 @@ export default function LightboxOverlay({
     setIndex((n) => (n + 1) % count);
   }, [count, setIndex]);
 
-  // Lock scroll while open
+  // Focus + scroll lock
   React.useEffect(() => {
     if (!open) return;
     dialogRef.current?.focus();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
   }, [open]);
+
+  useScrollLock(open);
 
   // Keyboard nav (no buttons over the image)
   useKeyNav({
@@ -91,7 +108,6 @@ export default function LightboxOverlay({
       className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm ${styles.backdrop}`}
       onClick={onClose} // clicking the backdrop closes
     >
-      {/* NOTE: No stopPropagation here—lets left panel empty space bubble to backdrop */}
       <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-[1fr_360px]">
         {/* Left: image area — clicking outside the image closes; clicking the image doesn't */}
         <div className="relative flex items-center justify-center p-3 sm:p-6">

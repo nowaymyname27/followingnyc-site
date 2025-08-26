@@ -6,52 +6,54 @@ import CollectionClient from "./CollectionClient";
 
 export const revalidate = 60;
 
-const query = `
+const query = /* groq */ `
 *[_type=="collection" && slug.current==$slug && (published != false)][0]{
   _id,
   title,
   year,
+  description,
   "slug": slug.current,
-  "photos": photos[]->{
-    _id,
-    title,
-    // adapt field names if your photo schema differs (e.g., mainImage vs image)
-    "url": coalesce(image.asset->url, mainImage.asset->url),
-    "alt": coalesce(alt, title)
+  items[]{
+    _key,
+    "url": coalesce(image.asset->url, photo->image.asset->url),
+    "title": coalesce(titleOverride, photo->title),
+    "description": coalesce(descriptionOverride, photo->description),
+    "alt": coalesce(titleOverride, photo->title, "Photo"),
+    "capturedAt": coalesce(capturedAtOverride, photo->capturedAt),
+    "tags": coalesce(
+      tagsOverride[]->{"_id": _id, "label": label},
+      photo->tags[]->{"_id": _id, "label": label}
+    )
   }
 }
 `;
 
 async function getCollection(slug) {
   const data = await sanityClient.fetch(query, { slug });
-  if (!data || !data.photos?.length) return null;
+  if (!data) return null;
 
-  // Normalize to client shape
+  const items = (data.items || []).filter((i) => i?.url);
+  if (!items.length) return null;
+
   return {
     id: data._id,
     title: data.title,
-    year: data.year,
+    year: data.year ?? null,
     slug: data.slug,
-    photos: data.photos
-      .filter((p) => !!p?.url)
-      .map((p) => ({ id: p._id, url: p.url, alt: p.alt || "Photo" })),
+    description: data.description || "",
+    items, // ← pass raw items; client will adapt to PhotoMasonry/Lightbox
   };
 }
 
-export default async function Page({ params }) {
-  const { slug } = params;
+export default async function Page({ params: paramsPromise }) {
+  const { slug } = await paramsPromise;
   const collection = await getCollection(slug);
   if (!collection) notFound();
 
   return (
     <>
-      {/* White shim so the floating nav never shows a dark band above */}
       <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
-
-      {/* Solid white / black-text navbar for inner pages */}
       <NavBarLight />
-
-      {/* Content padded to clear fixed nav */}
       <div className="pt-24 bg-background text-black">
         <CollectionClient collection={collection} />
       </div>
