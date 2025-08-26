@@ -6,6 +6,7 @@ import CollectionsClient from "./CollectionsClient";
 export const revalidate = 60;
 
 // Fetch all collections (published), newest year first, then title.
+// …
 const query = /* groq */ `
 *[_type == "collection" && (published != false)] 
 | order(coalesce(year, 0) desc, title asc) {
@@ -13,11 +14,10 @@ const query = /* groq */ `
   title,
   year,
   "slug": slug.current,
-  // Prefer explicit coverImage; otherwise fall back to first item (embedded image or photo ref)
-  "coverUrl": coalesce(
+  // alias to "cover" so the card can read it directly
+  "cover": coalesce(
     coverImage.asset->url,
-    items[0].image.asset->url,
-    items[0].photo->image.asset->url
+    items[0].image.asset->url
   ),
   "count": count(items)
 }
@@ -25,18 +25,14 @@ const query = /* groq */ `
 
 async function getCollections() {
   const rows = await sanityClient.fetch(query);
-
-  // Normalize to the shape CollectionsClient expects: albums[]
-  const albums = (rows || []).map((c) => ({
+  return (rows || []).map((c) => ({
     id: c._id,
     title: c.title,
     year: c.year ?? null,
     slug: c.slug,
-    coverUrl: c.coverUrl || null,
+    cover: c.cover || null, // <-- was coverUrl
     count: typeof c.count === "number" ? c.count : 0,
   }));
-
-  return albums;
 }
 
 export default async function Page() {

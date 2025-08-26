@@ -12,7 +12,7 @@ export default {
     },
     { name: "titleOverride", title: "Title", type: "string" },
     { name: "descriptionOverride", title: "Description", type: "text" },
-    { name: "capturedAtOverride", title: "Capture Date", type: "datetime" },
+    { name: "capturedAtOverride", title: "Capture Date", type: "date" },
     {
       name: "tagsOverride",
       title: "Tags",
