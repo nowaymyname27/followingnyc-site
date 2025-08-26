@@ -5,4 +5,11 @@ import gallery from "./gallery";
 import galleryItem from "./galleryItem";
 import collectionItem from "./collectionItem";
 
-export const schemaTypes = [photo, tag, collection, gallery, galleryItem];
+export const schemaTypes = [
+  photo,
+  tag,
+  collection,
+  gallery,
+  galleryItem,
+  collectionItem,
+];
