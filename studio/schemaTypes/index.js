@@ -4,7 +4,8 @@ import gallery from "./gallery";
 import galleryItem from "./galleryItem";
 import collectionItem from "./collectionItem";
 import landingPage from "./landingPage";
-import landingPageItem from "./landingPageItem";
+import mode from "./mode";
+import heroSlide from "./heroSlide";
 
 export const schemaTypes = [
   tag,
@@ -13,5 +14,6 @@ export const schemaTypes = [
   galleryItem,
   collectionItem,
   landingPage,
-  landingPageItem,
+  mode,
+  heroSlide,
 ];

@@ -6,13 +6,25 @@ export default function TripleColumnMode({
   activeIndex = 0,
   active = false,
 }) {
-  const len = slides.length || 1;
+  // Normalize slides so strings still work
+  const norm = (it, i) => {
+    if (typeof it === "string")
+      return { id: `s-${i}`, src: it, alt: "Column slide" };
+    return {
+      id: it.id || `s-${i}`,
+      src: it.src,
+      alt: it.alt || "Column slide",
+      description: it.description || "",
+    };
+  };
+  const S = slides.map(norm);
+
+  const len = S.length || 1;
   const colIdx = [
     activeIndex % len,
     (activeIndex + 1) % len,
     (activeIndex + 2) % len,
   ];
-  const objPos = ["object-left", "object-center", "object-right"];
 
   return (
     <div
@@ -23,38 +35,28 @@ export default function TripleColumnMode({
       <div className="relative h-[75vh] w-[70vw] md:w-[62vw] lg:w-[58vw] xl:w-[54vw] -translate-x-[8vw] rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10 p-3">
         <div className="grid h-full w-full grid-cols-3 gap-3">
           {[0, 1, 2].map((col) => {
-            const item = slides[colIdx[col]] || {};
-            const title = typeof item === "object" ? item.title : "";
+            const current = S[colIdx[col]] || { alt: "" };
+
             return (
               <div
                 key={col}
                 className="group relative overflow-hidden rounded-2xl bg-black/20"
               >
-                {slides.map((it, i) => {
-                  const src = typeof it === "string" ? it : it.src;
+                {S.map((s, i) => {
                   const isActive = i === colIdx[col];
                   return (
                     <img
-                      key={`${col}-${
-                        typeof it === "object" ? it.id || src : src
-                      }`}
-                      src={src}
-                      alt={
-                        typeof it === "object"
-                          ? it.title || "Column slide"
-                          : "Column slide"
-                      }
-                      className={`absolute inset-0 h-full w-full object-cover ${
-                        objPos[col]
-                      } transition-opacity duration-700 ${
+                      key={`${col}-${s.id}`}
+                      src={s.src}
+                      alt={s.alt}
+                      title={s.alt}
+                      className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${
                         isActive ? "opacity-100" : "opacity-0"
                       }`}
                       loading={i === 0 ? "eager" : "lazy"}
                       style={{
                         animation: isActive
-                          ? `${["kbRight", "kbLeft", "kbUp"][col]} ${
-                              ["16s", "18s", "20s"][col]
-                            } ease-in-out infinite alternate`
+                          ? `${["kbRight", "kbLeft", "kbUp"][col]} ${["16s", "18s", "20s"][col]} ease-in-out infinite alternate`
                           : "none",
                         willChange: "transform, opacity",
                         transitionDelay: isActive ? `${col * 120}ms` : "0ms",
@@ -62,9 +64,11 @@ export default function TripleColumnMode({
                     />
                   );
                 })}
-                {title ? (
+
+                {/* Hover caption */}
+                {current.alt ? (
                   <div className="pointer-events-none absolute left-2 bottom-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
-                    {title}
+                    {current.alt}
                   </div>
                 ) : null}
               </div>

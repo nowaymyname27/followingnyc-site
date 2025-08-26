@@ -1,16 +1,62 @@
-"use client";
-import React from "react";
-import Hero from "../components/Hero";
-import NavBar from "../components/NavBar";
-import WelcomeBox from "../components/WelcomeBox";
+// app/page.jsx
+import Hero from "@/components/Hero";
+import NavBar from "@/components/NavBar";
+import WelcomeBox from "@/components/WelcomeBox";
+import { sanityClient } from "@/lib/sanity.client";
 
-export default function Page() {
+export const revalidate = 60;
+
+const query = `
+*[_type == "landingPage"][0]{
+  title,
+  pageDescription,
+  heroSlides[]{
+    _key,
+    alt,
+    description,
+    modes,
+    "url": image.asset->url
+  }
+}
+`;
+
+async function getLandingPage() {
+  const doc = await sanityClient.fetch(query);
+  const slides = (doc?.heroSlides || []).map((s, i) => ({
+    id: s._key || `slide-${i}`,
+    src: s.url,
+    alt: s.alt || "",
+    description: s.description || "",
+    modes:
+      Array.isArray(s.modes) && s.modes.length
+        ? s.modes
+        : ["fullscreen", "sideImage", "tripleColumn"], // fallback: show in all modes
+  }));
+
+  return {
+    pageTitle: doc?.title || "",
+    slides,
+  };
+}
+
+export default async function Page() {
+  const landing = await getLandingPage();
+
+  const allModes = ["fullscreen", "sideImage", "tripleColumn"];
+  // Partition slides into per-mode arrays, preserving order
+  const mediaOverride = allModes.reduce((acc, m) => ({ ...acc, [m]: [] }), {});
+  landing.slides.forEach((s) => {
+    s.modes.forEach((m) => {
+      if (mediaOverride[m]) mediaOverride[m].push(s);
+    });
+  });
+
   return (
     <Hero
       interval={5000}
       mode="auto"
       layoutRangeMs={[9000, 16000]}
-      darkenBg={true}
+      darkenBg
       darkenFactor={0.5}
       colors={[
         "#0ea5e9",
@@ -21,12 +67,11 @@ export default function Page() {
         "#34d399",
         "#f59e0b",
       ]}
+      enabledModes={allModes.filter((m) => mediaOverride[m].length > 0)} // only enable modes that have slides
+      mediaOverride={mediaOverride}
     >
       <NavBar brand="FollowingNYC" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-        <h1 className="pointer-events-auto select-none px-4 text-4xl font-semibold tracking-tight text-white drop-shadow md:text-6xl"></h1>
-      </div>
-      <WelcomeBox />
+      <WelcomeBox title={landing.pageTitle} />
     </Hero>
   );
 }

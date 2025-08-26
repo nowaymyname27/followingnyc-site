@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { MODES } from "./hero/modes";
-import { getMediaByMode } from "../lib/heroData"; // <-- make sure this matches
+import { getMediaByMode } from "../lib/heroData"; // keep existing source
 
 export default function Hero({
   interval = 5000,
@@ -18,9 +18,20 @@ export default function Hero({
   ],
   darkenBg = true,
   darkenFactor = 0.55,
+  // NEW (optional):
+  enabledModes,
+  mediaOverride = {},
   children,
 }) {
-  const modeKeys = useMemo(() => Object.keys(MODES), []);
+  const registryKeys = useMemo(() => Object.keys(MODES), []);
+  const modeKeys = useMemo(() => {
+    if (Array.isArray(enabledModes) && enabledModes.length) {
+      return registryKeys.filter((k) => enabledModes.includes(k));
+    }
+    return registryKeys;
+  }, [registryKeys, enabledModes]);
+
+  // keep your existing local media source
   const mediaByMode = useMemo(() => {
     const out = {};
     modeKeys.forEach((k) => (out[k] = getMediaByMode(k)));
@@ -62,7 +73,8 @@ export default function Hero({
     setIndices((prev) => {
       const next = { ...prev };
       modeKeys.forEach((k) => {
-        const len = mediaByMode[k]?.length || 1;
+        const slides = mediaOverride[k] || mediaByMode[k] || [];
+        const len = slides.length || 1;
         next[k] = rand(len);
       });
       return next;
@@ -84,17 +96,18 @@ export default function Hero({
   useEffect(() => {
     const timers = [];
     modeKeys.forEach((k) => {
-      if ((mediaByMode[k]?.length || 0) < 2) return;
+      const slides = mediaOverride[k] || mediaByMode[k] || [];
+      if (slides.length < 2) return;
       const id = setInterval(() => {
         setIndices((prev) => ({
           ...prev,
-          [k]: ((prev[k] || 0) + 1) % mediaByMode[k].length,
+          [k]: ((prev[k] || 0) + 1) % slides.length,
         }));
       }, interval);
       timers.push(id);
     });
     return () => timers.forEach(clearInterval);
-  }, [modeKeys, mediaByMode, interval]);
+  }, [modeKeys, mediaByMode, mediaOverride, interval]);
 
   useEffect(() => {
     if (!autoMode || modeKeys.length <= 1) return;
@@ -127,7 +140,7 @@ export default function Hero({
     >
       {modeKeys.map((key) => {
         const { Component } = MODES[key];
-        const slides = mediaByMode[key] || []; // array of {id, src, title}
+        const slides = mediaOverride[key] || mediaByMode[key] || []; // <-- override if provided
         return (
           <Component
             key={key}
