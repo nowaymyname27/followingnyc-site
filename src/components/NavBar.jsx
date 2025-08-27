@@ -10,18 +10,27 @@ export default function NavBar({
     {
       label: "Curated Galleries",
       links: [
-        { label: "Gallery 1", href: "/galleries/1" },
-        { label: "Gallery 2", href: "/galleries/2" },
-        { label: "Gallery 3", href: "/galleries/3" },
+        { label: "Collage", href: "/galleries/collage" },
+        { label: "Hotel Rooms", href: "/galleries/hotel-rooms" },
+        {
+          label: "Water Tanks",
+          href: "/galleries/skyline-relics-nyc-water-tanks",
+        },
         { label: "All Galleries", href: "/galleries" },
       ],
     },
     {
       label: "Collections",
       links: [
-        { label: "Collection 1", href: "/collections/1" },
-        { label: "Collection 2", href: "/collections/2" },
-        { label: "Collection 3", href: "/collections/3" },
+        {
+          label: "Philly Pride Parade",
+          href: "/collections/pride-philly-parade-june-1st",
+        },
+        {
+          label: "Easter Parade",
+          href: "/collections/april-20-easter-parade-manhattan",
+        },
+        { label: "NYFW 2025", href: "/collections/nyfw" },
         { label: "All Collections", href: "/collections" },
       ],
     },

@@ -5,8 +5,11 @@ export default function WelcomeBox({
   className = "",
   title = "",
   heading = "Explore my work",
-  primary = { label: "Latest Curated Gallery", href: "/portfolio" },
-  secondary = { label: "Latest Collection", href: "/book" },
+  primary = { label: "Latest Curated Gallery", href: "/galleries/Collage" },
+  secondary = {
+    label: "Latest Collection",
+    href: "/collections/pride-philly-parade-june-1st",
+  },
   floating = true,
 }) {
   const posClasses = floating
