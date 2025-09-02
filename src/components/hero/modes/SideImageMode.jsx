@@ -6,7 +6,6 @@ export default function SideImageMode({
   activeIndex = 0,
   active = false,
 }) {
-  // Normalize slides so strings still work
   const norm = (it, i) => {
     if (typeof it === "string")
       return { id: `s-${i}`, src: it, alt: "Side panel slide" };
@@ -29,21 +28,19 @@ export default function SideImageMode({
       <div
         className={[
           "relative h-[75vh]",
-          // Width always leaves a viewport gutter so it never clips offscreen,
-          // even on awkward in-between widths:
-          "w-[min(70vw,calc(100vw-2rem))]", // base for md (component is hidden <md)
+          "w-[min(70vw,calc(100vw-2rem))]",
           "md:w-[min(62vw,calc(100vw-3rem))]",
           "lg:w-[min(58vw,calc(100vw-3.5rem))]",
           "xl:w-[min(54vw,calc(100vw-4rem))]",
           "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10",
         ].join(" ")}
+        tabIndex={0} // enable focus for keyboard users
       >
         {normalized.map((s, i) => (
           <img
             key={s.id}
             src={s.src}
-            alt={s.alt}
-            title={s.alt}
+            alt={s.alt} // keep alt for a11y/SEO
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
               i === activeIndex ? "opacity-100" : "opacity-0"
             }`}
@@ -51,9 +48,8 @@ export default function SideImageMode({
           />
         ))}
 
-        {/* Hover caption from ALT */}
         {current.alt ? (
-          <div className="pointer-events-none absolute left-3 bottom-3 rounded-lg bg-black/55 px-2.5 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
+          <div className="pointer-events-none absolute right-3 bottom-3 rounded-lg bg-black/55 px-2.5 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
             {current.alt}
           </div>
         ) : null}
