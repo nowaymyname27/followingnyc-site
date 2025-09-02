@@ -18,18 +18,31 @@ export default function Hero({
   ],
   darkenBg = true,
   darkenFactor = 0.55,
-  // NEW (optional):
+  // optional:
   enabledModes,
   mediaOverride = {},
   children,
 }) {
   const registryKeys = useMemo(() => Object.keys(MODES), []);
+
+  // Match WelcomeBox: force Fullscreen below LG (Tailwind lg = 1024px)
+  const [isLgUp, setIsLgUp] = useState(false);
+  useEffect(() => {
+    const update = () => setIsLgUp(window.innerWidth >= 1024);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Respect enabledModes on lg+, otherwise force fullscreen only
   const modeKeys = useMemo(() => {
-    if (Array.isArray(enabledModes) && enabledModes.length) {
-      return registryKeys.filter((k) => enabledModes.includes(k));
-    }
-    return registryKeys;
-  }, [registryKeys, enabledModes]);
+    const base =
+      Array.isArray(enabledModes) && enabledModes.length
+        ? registryKeys.filter((k) => enabledModes.includes(k))
+        : registryKeys;
+
+    return isLgUp ? base : ["fullscreen"];
+  }, [registryKeys, enabledModes, isLgUp]);
 
   // keep your existing local media source
   const mediaByMode = useMemo(() => {
@@ -39,7 +52,9 @@ export default function Hero({
   }, [modeKeys]);
 
   const [indices, setIndices] = useState(() =>
-    Object.fromEntries(modeKeys.map((k) => [k, 0]))
+    Object.fromEntries(
+      (modeKeys.length ? modeKeys : ["fullscreen"]).map((k) => [k, 0])
+    )
   );
   const [layout, setLayout] = useState(modeKeys[0] || "fullscreen");
   const [bgColor, setBgColor] = useState("#000000");
@@ -59,7 +74,10 @@ export default function Hero({
     };
   };
   const rgbToHex = (r, g, b) =>
-    `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+    `#${[r, g, b]
+      .map((v) => v.toString(16))
+      .join("")
+      .padStart(6, "0")}`;
   const darkenColor = (hex, factor = 0.55) => {
     const { r, g, b } = hexToRgb(hex);
     return rgbToHex(
@@ -69,6 +87,7 @@ export default function Hero({
     );
   };
 
+  // Initial randomization on mount
   useEffect(() => {
     setIndices((prev) => {
       const next = { ...prev };
@@ -93,6 +112,25 @@ export default function Hero({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // once
 
+  // When available modes change (e.g., crossing lg breakpoint), normalize indices and layout
+  useEffect(() => {
+    setIndices((prev) => {
+      const next = {};
+      modeKeys.forEach((k) => {
+        const slides = mediaOverride[k] || mediaByMode[k] || [];
+        const len = slides.length || 1;
+        next[k] = prev[k] != null ? prev[k] % len : rand(len);
+      });
+      return next;
+    });
+
+    if (!modeKeys.includes(layout)) {
+      setLayout(modeKeys[0] || "fullscreen");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modeKeys]);
+
+  // Advance slides per-mode
   useEffect(() => {
     const timers = [];
     modeKeys.forEach((k) => {
@@ -109,6 +147,7 @@ export default function Hero({
     return () => timers.forEach(clearInterval);
   }, [modeKeys, mediaByMode, mediaOverride, interval]);
 
+  // Auto-rotate layouts only when multiple are available (lg+)
   useEffect(() => {
     if (!autoMode || modeKeys.length <= 1) return;
     let timeout;

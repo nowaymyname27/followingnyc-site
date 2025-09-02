@@ -42,9 +42,9 @@ export default function NavBar({
   ];
 
   return (
-    <div className="fixed inset-x-0 top-6 z-40 px-6">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
-        {/* Brand (top-left). Replace text with SVG later */}
+    <div className="fixed inset-x-0 top-6 z-40">
+      <div className="flex w-full items-center justify-between px-4 md:px-6">
+        {/* Brand (left) */}
         <a
           href="/"
           className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold tracking-tight text-white backdrop-blur-xl shadow-lg hover:bg-white/15"
@@ -53,16 +53,16 @@ export default function NavBar({
           {brand}
         </a>
 
-        {/* Right side: full menus on md+, compact menu on <md */}
+        {/* Right side: full menus on md+, compact on <md */}
         <div className="flex items-center">
-          {/* Compact menu (mobile) */}
+          {/* Mobile menu */}
           <MobileMenu
             menus={defaultMenus}
             buttons={buttons}
             className="md:hidden"
           />
 
-          {/* Full menu pill (desktop/tablet) */}
+          {/* Desktop/tablet menu */}
           <div className="hidden md:flex items-center gap-6 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-white backdrop-blur-xl shadow-lg">
             {defaultMenus.map((m) => (
               <Dropdown key={m.label} label={m.label} links={m.links} />
@@ -114,7 +114,7 @@ function Dropdown({ label, links }) {
           <a
             key={l.href}
             href={l.href}
-            className="block rounded-xl px-3 py-2 text-xs text-white/90 hover:bg-white/10 hover:text-white"
+            className="block rounded-xl px-3 py-2 text-xs text.white/90 hover:bg-white/10 hover:text-white"
           >
             {l.label}
           </a>
@@ -140,7 +140,7 @@ function MobileMenu({ menus, buttons, className = "" }) {
       </button>
 
       {open && (
-        <div className="absolute right-6 mt-2 w-56 rounded-2xl border border-white/15 bg-black/70 p-2 text-white shadow-xl backdrop-blur-xl">
+        <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/15 bg-black/70 p-2 text-white shadow-xl backdrop-blur-xl">
           {menus.map((m) => (
             <div key={m.label} className="mb-2 last:mb-0">
               <div className="px-3 py-2 text-xs font-semibold text-white/80">

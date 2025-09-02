@@ -22,11 +22,22 @@ export default function SideImageMode({
 
   return (
     <div
-      className={`group absolute inset-y-8 left-1/2 hidden md:flex items-center transform transition-transform duration-700 ease-out
+      className={`group absolute inset-y-8 right-0 md:right-4 lg:right-6 hidden md:flex items-center transform transition-transform duration-700 ease-out
       ${active ? "translate-x-0" : "translate-x-[120%]"}`}
       aria-hidden={!active}
     >
-      <div className="relative h-[75vh] w-[70vw] md:w-[62vw] lg:w-[58vw] xl:w-[54vw] -translate-x-[8vw] overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10">
+      <div
+        className={[
+          "relative h-[75vh]",
+          // Width always leaves a viewport gutter so it never clips offscreen,
+          // even on awkward in-between widths:
+          "w-[min(70vw,calc(100vw-2rem))]", // base for md (component is hidden <md)
+          "md:w-[min(62vw,calc(100vw-3rem))]",
+          "lg:w-[min(58vw,calc(100vw-3.5rem))]",
+          "xl:w-[min(54vw,calc(100vw-4rem))]",
+          "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10",
+        ].join(" ")}
+      >
         {normalized.map((s, i) => (
           <img
             key={s.id}

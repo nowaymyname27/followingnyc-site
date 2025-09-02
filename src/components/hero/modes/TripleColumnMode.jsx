@@ -28,11 +28,21 @@ export default function TripleColumnMode({
 
   return (
     <div
-      className={`absolute inset-y-8 left-1/2 hidden md:flex items-center transform transition-transform duration-700 ease-out
+      className={`absolute inset-y-8 right-0 md:right-4 lg:right-6 hidden md:flex items-center transform transition-transform duration-700 ease-out
       ${active ? "translate-x-0" : "translate-x-[120%]"}`}
       aria-hidden={!active}
     >
-      <div className="relative h-[75vh] w-[70vw] md:w-[62vw] lg:w-[58vw] xl:w-[54vw] -translate-x-[8vw] rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10 p-3">
+      <div
+        className={[
+          "relative h-[75vh]",
+          // Safe widths: keep a gutter so the card never bleeds offscreen
+          "w-[min(70vw,calc(100vw-2rem))]",
+          "md:w-[min(62vw,calc(100vw-3rem))]",
+          "lg:w-[min(58vw,calc(100vw-3.5rem))]",
+          "xl:w-[min(54vw,calc(100vw-4rem))]",
+          "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10 p-3",
+        ].join(" ")}
+      >
         <div className="grid h-full w-full grid-cols-3 gap-3">
           {[0, 1, 2].map((col) => {
             const current = S[colIdx[col]] || { alt: "" };
@@ -56,7 +66,9 @@ export default function TripleColumnMode({
                       loading={i === 0 ? "eager" : "lazy"}
                       style={{
                         animation: isActive
-                          ? `${["kbRight", "kbLeft", "kbUp"][col]} ${["16s", "18s", "20s"][col]} ease-in-out infinite alternate`
+                          ? `${
+                              ["kbRight", "kbLeft", "kbUp"][col]
+                            } ${["16s", "18s", "20s"][col]} ease-in-out infinite alternate`
                           : "none",
                         willChange: "transform, opacity",
                         transitionDelay: isActive ? `${col * 120}ms` : "0ms",
