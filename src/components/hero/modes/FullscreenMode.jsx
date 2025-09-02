@@ -6,38 +6,32 @@ export default function FullscreenMode({
   activeIndex = 0,
   active = true,
 }) {
-  // Defensive normalization for string/object slides
-  const norm = (it, i) => {
-    if (typeof it === "string") {
-      return { id: `s-${i}`, src: it, alt: "Fullscreen slide" };
-    }
-    return {
-      id: it.id || `s-${i}`,
-      src: it.src,
-      alt: it.alt || "Fullscreen slide",
-      description: it.description || "",
-    };
-  };
+  // Normalize slides so strings still work
+  const norm = (it, i) =>
+    typeof it === "string"
+      ? { id: `s-${i}`, src: it, alt: "Fullscreen slide" }
+      : {
+          id: it.id || `s-${i}`,
+          src: it.src,
+          alt: it.alt || "Fullscreen slide",
+          description: it.description || "",
+        };
 
   const normalized = slides.map(norm);
   const current = normalized[activeIndex] || { src: "", alt: "" };
 
   return (
     <div
-      className={`group absolute inset-0 transition-opacity duration-700 ${
-        active ? "opacity-100" : "md:opacity-0"
-      }`}
-      tabIndex={0} // enable keyboard focus for caption a11y
+      className={`group hero-mode ${active ? "opacity-100" : "md:opacity-0"}`}
       aria-hidden={!active}
+      tabIndex={0} // enables keyboard focus to reveal caption (a11y)
     >
       {normalized.map((s, i) => (
         <img
           key={s.id}
           src={s.src}
-          alt={s.alt} // keep alt, remove title to avoid native tooltip
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ${
-            i === activeIndex ? "opacity-100" : "opacity-0"
-          }`}
+          alt={s.alt} // keep alt; no title to avoid native tooltip
+          className={`hero-slide ${i === activeIndex ? "opacity-100" : "opacity-0"}`}
           loading={i === 0 ? "eager" : "lazy"}
         />
       ))}

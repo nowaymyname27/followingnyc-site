@@ -1,58 +1,90 @@
 "use client";
 import React from "react";
 
-export default function SideImageMode({
+export default function TripleColumnMode({
   slides = [],
   activeIndex = 0,
   active = false,
 }) {
-  const norm = (it, i) => {
-    if (typeof it === "string")
-      return { id: `s-${i}`, src: it, alt: "Side panel slide" };
-    return {
-      id: it.id || `s-${i}`,
-      src: it.src,
-      alt: it.alt || "Side panel slide",
-      description: it.description || "",
-    };
-  };
-  const normalized = slides.map(norm);
-  const current = normalized[activeIndex] || { alt: "" };
+  // Normalize slides so strings still work
+  const norm = (it, i) =>
+    typeof it === "string"
+      ? { id: `s-${i}`, src: it, alt: "Column slide" }
+      : {
+          id: it.id || `s-${i}`,
+          src: it.src,
+          alt: it.alt || "Column slide",
+          description: it.description || "",
+        };
+
+  const S = slides.map(norm);
+
+  const len = S.length || 1;
+  const colIdx = [
+    activeIndex % len,
+    (activeIndex + 1) % len,
+    (activeIndex + 2) % len,
+  ];
 
   return (
     <div
-      className={`group absolute inset-y-8 right-0 md:right-4 lg:right-6 hidden md:flex items-center transform transition-transform duration-700 ease-out
-      ${active ? "translate-x-0" : "translate-x-[120%]"}`}
+      className={`absolute inset-y-8 right-0 md:right-4 lg:right-6 hidden md:flex items-center transform transition-transform duration-700 ease-out ${
+        active ? "translate-x-0" : "translate-x-[120%]"
+      }`}
       aria-hidden={!active}
     >
       <div
         className={[
           "relative h-[75vh]",
+          // Safe widths so the card never bleeds offscreen
           "w-[min(70vw,calc(100vw-2rem))]",
           "md:w-[min(62vw,calc(100vw-3rem))]",
           "lg:w-[min(58vw,calc(100vw-3.5rem))]",
           "xl:w-[min(54vw,calc(100vw-4rem))]",
-          "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10",
+          "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10 p-3",
         ].join(" ")}
-        tabIndex={0} // enable focus for keyboard users
       >
-        {normalized.map((s, i) => (
-          <img
-            key={s.id}
-            src={s.src}
-            alt={s.alt} // keep alt for a11y/SEO
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-              i === activeIndex ? "opacity-100" : "opacity-0"
-            }`}
-            loading={i === 0 ? "eager" : "lazy"}
-          />
-        ))}
+        <div className="grid h-full w-full grid-cols-3 gap-3">
+          {[0, 1, 2].map((col) => {
+            const current = S[colIdx[col]] || { alt: "" };
 
-        {current.alt ? (
-          <div className="pointer-events-none absolute right-3 bottom-3 rounded-lg bg-black/55 px-2.5 py-1 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
-            {current.alt}
-          </div>
-        ) : null}
+            return (
+              <div
+                key={col}
+                className="group relative overflow-hidden rounded-2xl bg-black/20"
+              >
+                {S.map((s, i) => {
+                  const isActive = i === colIdx[col];
+                  return (
+                    <img
+                      key={`${col}-${s.id}`}
+                      src={s.src}
+                      alt={s.alt}
+                      className={[
+                        "absolute inset-0 h-full w-full object-cover object-center",
+                        "hero-slide",
+                        isActive ? "opacity-100" : "opacity-0",
+                        isActive ? `kb-col-${col}` : "",
+                      ].join(" ")}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      style={{
+                        // Stagger the fade a touch per column (keep your original delay idea)
+                        transitionDelay: isActive ? `${col * 120}ms` : "0ms",
+                      }}
+                    />
+                  );
+                })}
+
+                {/* Hover caption */}
+                {current.alt ? (
+                  <div className="pointer-events-none absolute left-2 bottom-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                    {current.alt}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

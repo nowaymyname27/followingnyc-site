@@ -53,9 +53,9 @@ export default async function Page() {
 
   return (
     <Hero
-      interval={5000}
+      interval={7000}
       mode="auto"
-      layoutRangeMs={[9000, 16000]}
+      layoutRangeMs={21000}
       darkenBg
       darkenFactor={0.5}
       colors={[

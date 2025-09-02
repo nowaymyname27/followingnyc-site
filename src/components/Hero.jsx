@@ -1,12 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { MODES } from "./hero/modes";
-import { getMediaByMode } from "../lib/heroData"; // keep existing source
+import { getMediaByMode } from "../lib/heroData";
+import "./styles/hero.css"; // shared CSS with vars
 
 export default function Hero({
   interval = 5000,
   mode = "auto",
-  layoutRangeMs = [9000, 16000],
+  layoutRangeMs = [9000, 16000], // can also be a number
   colors = [
     "#0ea5e9",
     "#6366f1",
@@ -18,14 +19,18 @@ export default function Hero({
   ],
   darkenBg = true,
   darkenFactor = 0.55,
-  // optional:
   enabledModes,
   mediaOverride = {},
   children,
+  animationConfig = {
+    slideFadeMs: 1200,
+    modeFadeMs: 700,
+    kbDurationsSec: [16, 18, 20],
+  },
 }) {
   const registryKeys = useMemo(() => Object.keys(MODES), []);
 
-  // Match WelcomeBox: force Fullscreen below LG (Tailwind lg = 1024px)
+  // Force fullscreen below LG (Tailwind lg = 1024px): mobile + tablet => fullscreen only
   const [isLgUp, setIsLgUp] = useState(false);
   useEffect(() => {
     const update = () => setIsLgUp(window.innerWidth >= 1024);
@@ -40,17 +45,17 @@ export default function Hero({
       Array.isArray(enabledModes) && enabledModes.length
         ? registryKeys.filter((k) => enabledModes.includes(k))
         : registryKeys;
-
     return isLgUp ? base : ["fullscreen"];
   }, [registryKeys, enabledModes, isLgUp]);
 
-  // keep your existing local media source
+  // Media per mode
   const mediaByMode = useMemo(() => {
     const out = {};
     modeKeys.forEach((k) => (out[k] = getMediaByMode(k)));
     return out;
   }, [modeKeys]);
 
+  // State
   const [indices, setIndices] = useState(() =>
     Object.fromEntries(
       (modeKeys.length ? modeKeys : ["fullscreen"]).map((k) => [k, 0])
@@ -87,6 +92,15 @@ export default function Hero({
     );
   };
 
+  // Helper: fixed delay (number) OR random window ([min,max])
+  const getLayoutDelay = () => {
+    if (typeof layoutRangeMs === "number") return layoutRangeMs;
+    const [min, max] = Array.isArray(layoutRangeMs)
+      ? layoutRangeMs
+      : [9000, 16000];
+    return randRange(min, max);
+  };
+
   // Initial randomization on mount
   useEffect(() => {
     setIndices((prev) => {
@@ -112,18 +126,20 @@ export default function Hero({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // once
 
-  // When available modes change (e.g., crossing lg breakpoint), normalize indices and layout
+  // 🔧 Normalize when the available mode set changes (e.g., crossing lg breakpoint)
   useEffect(() => {
+    // Rebuild indices for current set
     setIndices((prev) => {
       const next = {};
       modeKeys.forEach((k) => {
         const slides = mediaOverride[k] || mediaByMode[k] || [];
         const len = slides.length || 1;
-        next[k] = prev[k] != null ? prev[k] % len : rand(len);
+        next[k] = prev[k] != null ? prev[k] % len : 0;
       });
       return next;
     });
 
+    // Ensure the current layout is valid; if not, switch to first available
     if (!modeKeys.includes(layout)) {
       setLayout(modeKeys[0] || "fullscreen");
     }
@@ -147,12 +163,12 @@ export default function Hero({
     return () => timers.forEach(clearInterval);
   }, [modeKeys, mediaByMode, mediaOverride, interval]);
 
-  // Auto-rotate layouts only when multiple are available (lg+)
+  // Auto-rotate layouts
   useEffect(() => {
     if (!autoMode || modeKeys.length <= 1) return;
     let timeout;
     const schedule = () => {
-      const delay = randRange(layoutRangeMs[0], layoutRangeMs[1]);
+      const delay = getLayoutDelay();
       timeout = setTimeout(() => {
         const others = modeKeys.filter((k) => k !== layout);
         const next = others.length ? others[rand(others.length)] : layout;
@@ -172,14 +188,28 @@ export default function Hero({
       : bgColor
     : "#000000";
 
+  // CSS variable injection for animation speeds
+  const {
+    slideFadeMs = 1200,
+    modeFadeMs = 700,
+    kbDurationsSec = [16, 18, 20],
+  } = animationConfig || {};
+  const cssVars = {
+    ["--slide-fade-ms"]: `${slideFadeMs}ms`,
+    ["--mode-fade-ms"]: `${modeFadeMs}ms`,
+    ["--kb0-sec"]: `${kbDurationsSec[0]}s`,
+    ["--kb1-sec"]: `${kbDurationsSec[1]}s`,
+    ["--kb2-sec"]: `${kbDurationsSec[2]}s`,
+  };
+
   return (
     <div
       className="relative h-screen w-full overflow-hidden transition-colors duration-700"
-      style={{ backgroundColor: appliedBg }}
+      style={{ backgroundColor: appliedBg, ...cssVars }}
     >
       {modeKeys.map((key) => {
         const { Component } = MODES[key];
-        const slides = mediaOverride[key] || mediaByMode[key] || []; // <-- override if provided
+        const slides = mediaOverride[key] || mediaByMode[key] || [];
         return (
           <Component
             key={key}
