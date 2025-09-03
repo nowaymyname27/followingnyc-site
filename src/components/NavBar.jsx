@@ -24,7 +24,7 @@ export default function NavBar({
       links: [
         {
           label: "Philly Pride Parade",
-          href: "/collections/pride-philly-parade-june-1st",
+          href: "/collections/pride-philly-parade",
         },
         {
           label: "Easter Parade",

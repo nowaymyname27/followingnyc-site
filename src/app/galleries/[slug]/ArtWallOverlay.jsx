@@ -77,7 +77,7 @@ export default function ArtWallOverlay({
             <div
               className="
                 relative inline-block
-                border border-black
+                border border-neutral-300
                 shadow-[0_12px_40px_rgba(0,0,0,0.15)]
                 rounded-xl
                 bg-white
@@ -102,7 +102,7 @@ export default function ArtWallOverlay({
 
           {/* Placard */}
           <div className="relative">
-            <div className="rounded-2xl border border-black bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6">
+            <div className="rounded-2xl border border-neutral-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <h2 className="text-lg font-semibold">
                   {photo.title || "Untitled"}
@@ -110,7 +110,7 @@ export default function ArtWallOverlay({
                 <button
                   onClick={onClose}
                   aria-label="Close artwork view"
-                  className="rounded-full border border-black/20 px-2 py-0.5 text-sm hover:bg-black/5"
+                  className="rounded-full border border-neutral-300 px-2 py-0.5 text-sm hover:bg-black/5"
                 >
                   ✕
                 </button>
@@ -137,7 +137,7 @@ export default function ArtWallOverlay({
                 <div className="mt-5 flex items-center justify-between md:hidden">
                   <button
                     onClick={goPrev}
-                    className="rounded-full border border-black px-3 py-1 text-sm bg-white shadow active:translate-y-[1px]"
+                    className="rounded-full border border-neutral-300 px-3 py-1 text-sm bg-white shadow active:translate-y-[1px]"
                   >
                     ‹ Prev
                   </button>
@@ -146,7 +146,7 @@ export default function ArtWallOverlay({
                   </span>
                   <button
                     onClick={goNext}
-                    className="rounded-full border border-black px-3 py-1 text-sm bg-white shadow active:translate-y-[1px]"
+                    className="rounded-full border border-neutral-300 px-3 py-1 text-sm bg-white shadow active:translate-y-[1px]"
                   >
                     Next ›
                   </button>
@@ -160,7 +160,7 @@ export default function ArtWallOverlay({
                 <button
                   aria-label="Previous"
                   onClick={goPrev}
-                  className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
+                  className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-neutral-300 px-3 py-1 text-sm shadow hover:bg-white"
                 >
                   ‹ Prev
                 </button>
@@ -170,7 +170,7 @@ export default function ArtWallOverlay({
                 <button
                   aria-label="Next"
                   onClick={goNext}
-                  className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
+                  className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-neutral-300 px-3 py-1 text-sm shadow hover:bg-white"
                 >
                   Next ›
                 </button>
