@@ -42,7 +42,7 @@ export default function NavBarLight({
   ];
 
   return (
-    <div className="fixed inset-x-0 top-6 z-40 bg-background">
+    <div className="fixed inset-x-0 top-6 z-40 bg-opacity-100">
       <div className="flex w-full items-center justify-between px-4 md:px-6">
         {/* Brand (left) */}
         <a

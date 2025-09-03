@@ -50,10 +50,9 @@ export default function LightboxOverlay({
     if (!open) return;
     dialogRef.current?.focus();
   }, [open]);
-
   useScrollLock(open);
 
-  // Keyboard nav (no buttons over the image)
+  // Keyboard nav
   useKeyNav({
     onPrev: open ? goPrev : undefined,
     onNext: open ? goNext : undefined,
@@ -116,16 +115,18 @@ export default function LightboxOverlay({
             alt={current.alt || "Photo"}
             className={`max-h-[85vh] max-w-[92vw] md:max-w-[calc(100%-360px)] object-contain rounded-2xl shadow-2xl ${styles.imagePop}`}
             draggable={false}
-            onClick={(e) => e.stopPropagation()} // don't close when the image itself is clicked
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
 
-        {/* Right: placard (description) — clicks here should NOT close */}
+        {/* Right: placard (desktop) — now includes TITLE + DESCRIPTION */}
         <aside
-          className="hidden md:flex flex-col border-l border-white/10 bg-black/40 text-white"
+          className="hidden md:flex min-h-0 flex-col border-l border-white/10 bg-black/40 text-white"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-4 sm:p-6 space-y-4">
+          {/* Scrollable content */}
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+            {/* Collection meta + close */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-white/80">
                 {meta?.title}
@@ -143,10 +144,12 @@ export default function LightboxOverlay({
               </button>
             </div>
 
+            {/* Index */}
             <div className="text-xs text-white/60">
               {index + 1} / {count}
             </div>
 
+            {/* Actions */}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -157,15 +160,30 @@ export default function LightboxOverlay({
                 {downloading ? "Downloading…" : "Download"}
               </button>
             </div>
+
+            {/* NEW: Photo title & description */}
+            {(current.title || current.description) && (
+              <div className="space-y-2">
+                {current.title && (
+                  <div className="text-base font-medium text-white/90">
+                    {current.title}
+                  </div>
+                )}
+                {current.description && (
+                  <p className="text-sm leading-relaxed text-white/80 whitespace-pre-wrap">
+                    {current.description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Optional: Alt text (kept, but after description) */}
+            {current.alt ? (
+              <div className="text-xs text-white/60">Alt: {current.alt}</div>
+            ) : null}
           </div>
 
-          {current.alt ? (
-            <div className="mt-auto p-6 text-sm text-white/80">
-              {current.alt}
-            </div>
-          ) : null}
-
-          {/* Desktop external controls (under the placard) */}
+          {/* Desktop external controls pinned at bottom */}
           {count > 1 && (
             <div className="p-4 sm:p-6 mt-2 flex items-center justify-between">
               <button
@@ -189,7 +207,7 @@ export default function LightboxOverlay({
           )}
         </aside>
 
-        {/* Mobile bottom bar controls — prevent backdrop close when using controls */}
+        {/* Mobile bottom bar controls (unchanged) */}
         {count > 1 && (
           <div
             className="md:hidden fixed inset-x-0 bottom-0 p-3 flex items-center justify-between bg-black/60 backdrop-blur border-t border-white/10 text-white"

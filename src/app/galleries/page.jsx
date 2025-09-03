@@ -34,7 +34,7 @@ export default async function Page() {
   return (
     <>
       {/* White shim so the floating nav never shows a dark band above */}
-      <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
+      <div className="fixed inset-x-0 top-0 h-6 bg-opacity-100 z-30" />
       <NavBarLight />
 
       {/* Content padded to clear fixed nav */}
