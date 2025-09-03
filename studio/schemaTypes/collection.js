@@ -15,6 +15,7 @@ export default {
       type: "number",
       validation: (Rule) => Rule.integer().min(1900).max(2100),
     },
+    { name: "capturedAtOverride", title: "Capture Date", type: "date" },
     { name: "description", type: "text" },
     {
       name: "coverImage",
