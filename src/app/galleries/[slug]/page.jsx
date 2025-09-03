@@ -87,7 +87,7 @@ export default async function Page({ params }) {
   return (
     <>
       {/* Match the page background so the navbar area blends */}
-      <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
+      <div className="fixed inset-x-0 top-0 h-6 bg-opacity-100 z-30" />
 
       <NavBarLight />
 

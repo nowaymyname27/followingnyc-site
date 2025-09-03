@@ -52,7 +52,7 @@ export default async function Page({ params: paramsPromise }) {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
+      <div className="fixed inset-x-0 top-0 h-6 bg-opacity-100 z-30" />
       <NavBarLight />
       <div className="pt-24 bg-background text-black">
         <CollectionClient collection={collection} />

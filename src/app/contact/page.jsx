@@ -8,7 +8,7 @@ export default function ContactPage() {
   return (
     <>
       {/* Top shim to match your global pattern */}
-      <div className="fixed inset-x-0 top-0 h-6 bg-background z-30" />
+      <div className="fixed inset-x-0 top-0 h-6 bg-opacity-100 z-30" />
       <NavBarLight />
 
       {/* Content padded to clear fixed nav */}
