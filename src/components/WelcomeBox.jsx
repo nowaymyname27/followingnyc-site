@@ -8,7 +8,7 @@ export default function WelcomeBox({
   primary = { label: "Latest Gallery", href: "/galleries/Collage" },
   secondary = {
     label: "Latest Collection",
-    href: "/collections/pride-philly-parade-june-1st",
+    href: "/collections/pride-philly-parade",
   },
   floating = true,
 }) {
