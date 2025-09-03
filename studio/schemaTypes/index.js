@@ -6,6 +6,9 @@ import collectionItem from "./collectionItem";
 import landingPage from "./landingPage";
 import mode from "./mode";
 import heroSlide from "./heroSlide";
+import link from "./link";
+import featured from "./featured";
+import testimonial from "./testimonial";
 
 export const schemaTypes = [
   tag,
@@ -16,4 +19,7 @@ export const schemaTypes = [
   landingPage,
   mode,
   heroSlide,
+  link,
+  featured,
+  testimonial,
 ];

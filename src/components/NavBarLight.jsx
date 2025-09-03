@@ -37,7 +37,7 @@ export default function NavBarLight({
   ];
 
   const buttons = rightButtons ?? [
-    { label: "News", href: "/news", primary: false },
+    { label: "Featured", href: "/featured", primary: false },
     { label: "Contact Me", href: "/contact", primary: false },
   ];
 

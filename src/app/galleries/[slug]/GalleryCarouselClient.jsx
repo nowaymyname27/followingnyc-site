@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import DesktopCarousel from "./DesktopCarousel";
+import DesktopCarousel from "./DesktopCarousel/DesktopCarousel";
 import MobileScroller from "./MobileScroller";
 import ArtWallOverlay from "./ArtWallOverlay";
 

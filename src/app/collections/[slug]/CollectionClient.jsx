@@ -1,15 +1,25 @@
 // app/collections/[slug]/CollectionClient.jsx
 "use client";
-
 import React, { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import PhotoMasonry from "../components/PhotoMasonry";
 import LightboxOverlay from "../components/LightboxOverlay";
 
-export default function CollectionClient({ collection }) {
-  const { title, year, items = [] } = collection || {};
+function formatPlainDate(dateStr) {
+  if (!dateStr) return "";
+  // dateStr like "2025-09-03" -> local Date at midnight *without* TZ shift
+  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
+  const dt = new Date(y, m - 1, d); // local time
+  return dt.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
-  // Adapt items (url/alt/title/description/…) to the photos shape your UI expects
+export default function CollectionClient({ collection }) {
+  const { title, year, date, items = [] } = collection || {};
+
   const photos = useMemo(
     () =>
       (items || []).map((i, idx) => ({
@@ -24,7 +34,6 @@ export default function CollectionClient({ collection }) {
     [items]
   );
 
-  // Lightbox state
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
 
@@ -60,7 +69,13 @@ export default function CollectionClient({ collection }) {
             <div className="text-5xl sm:text-6xl font-semibold leading-none">
               {title}
             </div>
-            {year ? (
+
+            {/* Use our formatter (falls back to year if no date) */}
+            {date ? (
+              <div className="mt-1 text-sm text-black/60">
+                {formatPlainDate(date)}
+              </div>
+            ) : year ? (
               <div className="mt-1 text-sm text-black/60">{year}</div>
             ) : null}
           </div>
@@ -74,18 +89,20 @@ export default function CollectionClient({ collection }) {
         </div>
       </header>
 
-      {/* Masonry stream (ALL items) */}
+      {/* Masonry stream */}
       <main className="mx-auto max-w-[1400px] px-3 sm:px-6 lg:px-10 pb-12">
         <PhotoMasonry photos={photos} onOpen={openAt} />
       </main>
 
-      {/* Lightbox Overlay */}
+      {/* Lightbox */}
       <LightboxOverlay
         open={open}
         photos={photos}
         index={idx}
         setIndex={setIdx}
         onClose={close}
+        // if you want the date in the overlay as well, pass it here:
+        // meta={{ title, date }}
         meta={{ title, year }}
       />
     </div>

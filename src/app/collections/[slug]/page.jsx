@@ -11,6 +11,7 @@ const query = /* groq */ `
   _id,
   title,
   year,
+  capturedAtOverride,            // ← add this
   description,
   "slug": slug.current,
   items[]{
@@ -38,10 +39,11 @@ async function getCollection(slug) {
   return {
     id: data._id,
     title: data.title,
-    year: data.year ?? null,
+    year: data.year ?? null, // keep if you still use it elsewhere
+    date: data.capturedAtOverride ?? null, // ← pass the new date
     slug: data.slug,
     description: data.description || "",
-    items, // ← pass raw items; client will adapt to PhotoMasonry/Lightbox
+    items,
   };
 }
 
