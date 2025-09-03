@@ -50,32 +50,58 @@ export default function ArtWallOverlay({
       aria-label="Artwork and description"
       tabIndex={-1}
       ref={dialogRef}
-      className="fixed inset-0 z-50"
+      className="
+        fixed inset-0 z-50
+        flex md:items-center md:justify-center
+      "
       onClick={onClose} // clicking the backdrop closes
     >
-      {/* Subtle museum-like backdrop */}
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-background/95" />
 
-      {/* Content row: artwork left, placard right (stack on mobile) */}
-      <div className="absolute inset-0 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-8 items-center">
-          {/* Artwork (clicking the image should NOT close) */}
+      {/* Content wrapper (stop backdrop close) */}
+      <div
+        className="
+          relative z-10 w-full
+          md:max-w-6xl
+          p-4 sm:p-6 md:p-8
+          // On mobile, allow scrolling so the placard is reachable
+          overflow-y-auto max-h-screen
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Layout: stack on mobile; centered row on md+ */}
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px] gap-6 md:gap-8 md:items-center">
+          {/* Artwork */}
           <div className="relative flex justify-center">
             <div
-              className="relative inline-block border border-black shadow-[0_12px_40px_rgba(0,0,0,0.15)] will-change-transform transition-transform duration-300 ease-out scale-100 md:scale-[1.02]"
-              onClick={(e) => e.stopPropagation()} // prevent backdrop close
+              className="
+                relative inline-block
+                border border-black
+                shadow-[0_12px_40px_rgba(0,0,0,0.15)]
+                rounded-xl
+                bg-white
+              "
             >
               <img
                 src={photo.url}
                 alt={photo.alt || "Artwork"}
-                className="block max-h-[72vh] md:max-h-[78vh] max-w-full object-contain"
+                className="
+                  block
+                  max-w-full
+                  // Mobile: keep room for placard below
+                  max-h-[62vh]
+                  // Desktop: larger
+                  md:max-h-[78vh]
+                  object-contain
+                "
                 draggable={false}
               />
             </div>
           </div>
 
-          {/* Placard (museum label) + controls (should NOT close) */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+          {/* Placard */}
+          <div className="relative">
             <div className="rounded-2xl border border-black bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <h2 className="text-lg font-semibold">
@@ -89,6 +115,7 @@ export default function ArtWallOverlay({
                   ✕
                 </button>
               </div>
+
               {photo.description ? (
                 <p className="text-sm leading-relaxed text-neutral-700">
                   {photo.description}
@@ -98,6 +125,7 @@ export default function ArtWallOverlay({
                   No description provided.
                 </p>
               )}
+
               {photo.alt ? (
                 <p className="mt-3 text-xs text-neutral-500">
                   Alt: {photo.alt}

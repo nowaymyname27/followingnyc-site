@@ -10,7 +10,7 @@ import ArtWallOverlay from "./ArtWallOverlay";
 export default function GalleryCarouselClient({ gallery }) {
   const { photos = [] } = gallery || {};
 
-  // State to open the "art wall" view with side description
+  // Art Wall
   const [wallOpen, setWallOpen] = React.useState(false);
   const [wallIndex, setWallIndex] = React.useState(0);
 
@@ -26,23 +26,18 @@ export default function GalleryCarouselClient({ gallery }) {
     },
     [photos]
   );
-
   const closeWall = React.useCallback(() => setWallOpen(false), []);
 
-  // Global ESC for closing wall view
   React.useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape") closeWall();
-    };
+    const onKey = (e) => e.key === "Escape" && closeWall();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [closeWall]);
 
-  // ---- External nav controls for DesktopCarousel
+  // Desktop carousel external nav state
   const desktopRef = React.useRef(null);
   const [deskIndex, setDeskIndex] = React.useState(0);
   const [deskCount, setDeskCount] = React.useState(photos.length);
-
   const handleIndexChange = React.useCallback((idx, cnt) => {
     setDeskIndex(idx);
     setDeskCount(cnt);
@@ -50,7 +45,7 @@ export default function GalleryCarouselClient({ gallery }) {
 
   return (
     <div className="min-h-screen bg-background text-neutral-900">
-      {/* Simple header: just Back button */}
+      {/* Header */}
       <header className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <Link
           href="/galleries"
@@ -61,42 +56,44 @@ export default function GalleryCarouselClient({ gallery }) {
         </Link>
       </header>
 
-      {/* Mobile: vertical scroll list */}
+      {/* Mobile */}
       <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-6 md:hidden">
         <MobileScroller photos={photos} onExpand={openWall} />
       </main>
 
-      {/* Desktop / Tablet: carousel + external controls */}
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 hidden md:block">
-        <DesktopCarousel
-          ref={desktopRef}
-          photos={photos}
-          onExpand={openWall}
-          onIndexChange={handleIndexChange}
-        />
+      {/* Desktop / Tablet — FULL BLEED */}
+      <section className="hidden md:block w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+        <div className="w-screen">
+          <DesktopCarousel
+            ref={desktopRef}
+            photos={photos}
+            onExpand={openWall}
+            onIndexChange={handleIndexChange}
+          />
 
-        {/* External controls (sit OUTSIDE the image) */}
-        {deskCount > 1 && (
-          <div className="mt-3 mb-10 flex items-center justify-between">
-            <button
-              aria-label="Previous"
-              onClick={() => desktopRef.current?.goPrev?.()}
-              className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
-            >
-              ‹ Prev
-            </button>
-            <span className="text-xs text-neutral-600">
-              {deskIndex + 1} / {deskCount}
-            </span>
-            <button
-              aria-label="Next"
-              onClick={() => desktopRef.current?.goNext?.()}
-              className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
-            >
-              Next ›
-            </button>
-          </div>
-        )}
+          {/* External controls */}
+          {deskCount > 1 && (
+            <div className="mt-3 mb-10 flex items-center justify-between px-6">
+              <button
+                aria-label="Previous"
+                onClick={() => desktopRef.current?.goPrev?.()}
+                className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
+              >
+                ‹ Prev
+              </button>
+              <span className="text-xs text-neutral-600">
+                {deskIndex + 1} / {deskCount}
+              </span>
+              <button
+                aria-label="Next"
+                onClick={() => desktopRef.current?.goNext?.()}
+                className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-black px-3 py-1 text-sm shadow hover:bg-white"
+              >
+                Next ›
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Art Wall Overlay */}

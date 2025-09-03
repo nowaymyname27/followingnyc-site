@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { sanityClient } from "@/lib/sanity.client";
 import NavBarLight from "@/components/NavBarLight";
 import GalleryCarouselClient from "./GalleryCarouselClient";
+import ScrollToBottomOnDesktop from "./ScrollToBottomOnDesktop";
 
 export const revalidate = 60;
 
@@ -18,9 +19,7 @@ const query = /* groq */ `
   // NEW: curated items with overrides
   "items": items[]{
     _key,
-    // resolve an image whether it's embedded or via photo reference
     "url": coalesce(image.asset->url, photo->image.asset->url),
-    // per-item fields with sensible fallbacks
     "title": coalesce(titleOverride, photo->title),
     "description": coalesce(descriptionOverride, photo->description),
     "alt": coalesce(titleOverride, photo->title, "Photo")
@@ -92,10 +91,12 @@ export default async function Page({ params }) {
 
       <NavBarLight />
 
-      {/* Content padded to clear fixed nav; use the same cream background */}
-      <div className="pt-24 bg-background text-black min-h-screen">
-        <GalleryCarouselClient gallery={gallery} />
-      </div>
+      {/* Auto-scroll to bottom on desktop so the carousel is in view */}
+      <ScrollToBottomOnDesktop>
+        <div className="pt-24 bg-background text-black min-h-screen">
+          <GalleryCarouselClient gallery={gallery} />
+        </div>
+      </ScrollToBottomOnDesktop>
     </>
   );
 }
