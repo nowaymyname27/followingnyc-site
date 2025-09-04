@@ -28,7 +28,7 @@ export default function ContactPage() {
             {/* About Me in a white box */}
             <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow">
               <h1 className="text-3xl font-bold tracking-tight mb-4">
-                Juan Carlos Ramírez — Following NYC
+                Following NYC
               </h1>
               <p className="leading-relaxed mb-5 text-stone-800">
                 Since 2011, I’ve been documenting Manhattan through street
