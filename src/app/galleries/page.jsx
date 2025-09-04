@@ -5,7 +5,29 @@ import NavBarLight from "@/components/NavBarLight";
 
 export const revalidate = 60;
 
-const query = `
+// Enhanced (with metadata)
+const queryV2 = `
+*[_type == "gallery"]{
+  _id,
+  title,
+  "slug": slug.current,
+  description,
+  year,
+  "cover": select(
+    defined(coverImage.asset) => {
+      "src": coverImage.asset->url,
+      "lqip": coverImage.asset->metadata.lqip,
+      "width": coverImage.asset->metadata.dimensions.width,
+      "height": coverImage.asset->metadata.dimensions.height,
+      "aspectRatio": coverImage.asset->metadata.dimensions.aspectRatio
+    },
+    null
+  )
+} | order(coalesce(year, 0) desc, title asc)
+`;
+
+// Original (string URL only)
+const queryFallback = `
 *[_type == "gallery"]{
   _id,
   title,
@@ -16,15 +38,34 @@ const query = `
 } | order(coalesce(year, 0) desc, title asc)
 `;
 
+function normalizeCover(c) {
+  if (!c) return null;
+  if (typeof c === "string") {
+    return { src: c, lqip: null, width: null, height: null, aspectRatio: null };
+  }
+  if (typeof c === "object" && c.src) return c;
+  return null;
+}
+
 async function getGalleries() {
-  const rows = await sanityClient.fetch(query);
-  return rows.map((r) => ({
+  let rows = [];
+  try {
+    rows = await sanityClient.fetch(queryV2);
+  } catch {
+    rows = [];
+  }
+  if (!rows?.length) {
+    // Fallback to the original query if V2 returns nothing or errors
+    rows = await sanityClient.fetch(queryFallback);
+  }
+
+  return (rows || []).map((r) => ({
     id: r._id,
     slug: r.slug,
     title: r.title,
     description: r.description || "",
     year: r.year ?? null,
-    cover: r.cover || "",
+    cover: normalizeCover(r.cover),
   }));
 }
 
@@ -33,11 +74,8 @@ export default async function Page() {
 
   return (
     <>
-      {/* White shim so the floating nav never shows a dark band above */}
       <div className="fixed inset-x-0 top-0 h-6 bg-opacity-100 z-30" />
       <NavBarLight />
-
-      {/* Content padded to clear fixed nav */}
       <div className="pt-24 bg-background text-black">
         <GalleriesClient items={items} />
       </div>

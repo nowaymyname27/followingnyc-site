@@ -7,9 +7,8 @@ import LightboxOverlay from "../components/LightboxOverlay";
 
 function formatPlainDate(dateStr) {
   if (!dateStr) return "";
-  // dateStr like "2025-09-03" -> local Date at midnight *without* TZ shift
   const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
-  const dt = new Date(y, m - 1, d); // local time
+  const dt = new Date(y, m - 1, d);
   return dt.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -20,16 +19,21 @@ function formatPlainDate(dateStr) {
 export default function CollectionClient({ collection }) {
   const { title, year, date, items = [] } = collection || {};
 
+  // Already normalized in page.jsx; keep this to be safe
   const photos = useMemo(
     () =>
       (items || []).map((i, idx) => ({
-        id: i._key ?? `${idx}`,
+        id: i.id ?? i._key ?? `${idx}`,
         url: i.url,
         alt: i.alt || "Photo",
         title: i.title ?? null,
         description: i.description ?? "",
         capturedAt: i.capturedAt ?? null,
         tags: i.tags || [],
+        lqip: i.lqip || null,
+        width: i.width ?? null,
+        height: i.height ?? null,
+        ratio: i.ratio ?? (i.width && i.height ? i.width / i.height : null),
       })),
     [items]
   );
@@ -69,8 +73,6 @@ export default function CollectionClient({ collection }) {
             <div className="text-5xl sm:text-6xl font-semibold leading-none">
               {title}
             </div>
-
-            {/* Use our formatter (falls back to year if no date) */}
             {date ? (
               <div className="mt-1 text-sm text-black/60">
                 {formatPlainDate(date)}
@@ -90,7 +92,10 @@ export default function CollectionClient({ collection }) {
       </header>
 
       {/* Masonry stream */}
-      <main className="mx-auto max-w-[1400px] px-3 sm:px-6 lg:px-10 pb-12">
+      <main
+        className="mx-auto max-w-[1400px] px-3 sm:px-6 lg:px-10 pb-12"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "1400px" }}
+      >
         <PhotoMasonry photos={photos} onOpen={openAt} />
       </main>
 
@@ -101,8 +106,6 @@ export default function CollectionClient({ collection }) {
         index={idx}
         setIndex={setIdx}
         onClose={close}
-        // if you want the date in the overlay as well, pass it here:
-        // meta={{ title, date }}
         meta={{ title, year }}
       />
     </div>

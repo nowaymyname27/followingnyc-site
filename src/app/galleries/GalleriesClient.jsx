@@ -13,85 +13,73 @@ export default function GalleriesClient({ items = [] }) {
     );
   }
 
-  // Refs to each scroll section for visibility animation
   const sectionRefs = React.useRef([]);
-
-  // Track which cards are within a comfortable viewport band for fade-in
   const [visible, setVisible] = React.useState(() =>
     Array(items.length).fill(false)
   );
-
-  // Track if we are near the bottom (to hide fade)
   const [showFade, setShowFade] = React.useState(true);
 
-  // Always start at top
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
-  // Compute visibility band + bottom detection
   React.useEffect(() => {
-    const compute = () => {
-      const vh = window.innerHeight;
-      const bandTop = vh * 0.2;
-      const bandBottom = vh * 0.8;
-
-      setVisible((prev) => {
-        const next = [...prev];
-        sectionRefs.current.forEach((sec, idx) => {
-          if (!sec) return;
-          const r = sec.getBoundingClientRect();
-          next[idx] = r.bottom > bandTop && r.top < bandBottom;
+    const io = new IntersectionObserver(
+      (entries) => {
+        setVisible((prev) => {
+          const next = [...prev];
+          for (const e of entries) {
+            const idx = Number(e.target.getAttribute("data-idx"));
+            if (!Number.isNaN(idx)) next[idx] = e.isIntersecting;
+          }
+          return next;
         });
-        return next;
-      });
+      },
+      { root: null, rootMargin: "0px 0px -20% 0px", threshold: 0.2 }
+    );
+    sectionRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, []);
 
-      // Check if we're near bottom of page
+  React.useEffect(() => {
+    const onScroll = () => {
       const scrolled =
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 20; // within 20px of bottom
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 20;
       setShowFade(!scrolled);
     };
-
-    // initial + bind
-    compute();
-    const onScroll = () => compute();
-    const onResize = () => compute();
-
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
     <div className="relative">
-      {/* Page content (uses window scroll) */}
       <div className="bg-background text-neutral-900 px-4 sm:px-6 lg:px-8">
         <div className="h-4" />
-
         {items.map((g, i) => (
           <section
             key={g.id || g.slug || i}
             ref={(el) => (sectionRefs.current[i] = el)}
+            data-idx={i}
             className="min-h-[88svh] grid place-items-center py-6"
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "1400px",
+            }}
           >
-            {/* Wrapper matches card width and centers it */}
             <div className="w-full max-w-7xl mx-auto">
               <GalleryCard
                 gallery={g}
                 isVisible={visible[i]}
                 href={g.slug ? `/galleries/${g.slug}` : undefined}
+                priority={i < 2}
               />
             </div>
           </section>
         ))}
-
         <div className="h-8" />
       </div>
 
-      {/* Bottom shadow indicator */}
       {showFade && (
         <div className="pointer-events-none fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/50 to-transparent z-20" />
       )}

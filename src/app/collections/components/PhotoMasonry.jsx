@@ -13,21 +13,20 @@ export default function PhotoMasonry({ photos = [], onOpen }) {
     const el = hostRef.current;
     const calc = () => {
       const w = el?.clientWidth ?? window.innerWidth;
-      // <640:1, >=640:2, >=1024:3, >=1280:4
       const n = w >= 1280 ? 4 : w >= 1024 ? 3 : w >= 640 ? 2 : 1;
       setCols(n);
     };
     calc();
     const ro = el ? new ResizeObserver(calc) : null;
     ro?.observe(el);
-    window.addEventListener("resize", calc);
+    window.addEventListener("resize", calc, { passive: true });
     return () => {
       ro?.disconnect();
       window.removeEventListener("resize", calc);
     };
   }, []);
 
-  // Distribute photos round-robin so top rows across columns come first
+  // Distribute round-robin so top rows across columns come first
   const columnized = React.useMemo(() => {
     const buckets = Array.from({ length: cols }, () => []);
     photos.forEach((p, i) => {
@@ -36,13 +35,20 @@ export default function PhotoMasonry({ photos = [], onOpen }) {
     return buckets;
   }, [photos, cols]);
 
-  const EAGER_ROWS = 1; // how many top rows per column to eagerly load
+  const EAGER_ROWS = 1; // top N rows per column load eagerly
 
   return (
     <div ref={hostRef} className="w-full">
       <div className="flex gap-4">
         {columnized.map((col, cIdx) => (
-          <div key={cIdx} className="flex-1 min-w-0">
+          <div
+            key={cIdx}
+            className="flex-1 min-w-0"
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "1200px",
+            }}
+          >
             {col.map((p, rIdx) => (
               <PhotoCell
                 key={p.id ?? `${p._i}-${p.url}`}
@@ -51,6 +57,9 @@ export default function PhotoMasonry({ photos = [], onOpen }) {
                 i={p._i}
                 onOpen={onOpen}
                 eager={rIdx < EAGER_ROWS}
+                lqip={p.lqip}
+                width={p.width}
+                height={p.height}
               />
             ))}
           </div>

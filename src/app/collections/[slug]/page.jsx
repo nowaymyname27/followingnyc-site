@@ -11,12 +11,17 @@ const query = /* groq */ `
   _id,
   title,
   year,
-  capturedAtOverride,            // ← add this
+  capturedAtOverride,
   description,
   "slug": slug.current,
   items[]{
     _key,
+    // prefer inline image, else referenced photo image
     "url": coalesce(image.asset->url, photo->image.asset->url),
+    "lqip": coalesce(image.asset->metadata.lqip, photo->image.asset->metadata.lqip),
+    "width": coalesce(image.asset->metadata.dimensions.width, photo->image.asset->metadata.dimensions.width),
+    "height": coalesce(image.asset->metadata.dimensions.height, photo->image.asset->metadata.dimensions.height),
+    "ratio": coalesce(image.asset->metadata.dimensions.aspectRatio, photo->image.asset->metadata.dimensions.aspectRatio),
     "title": coalesce(titleOverride, photo->title),
     "description": coalesce(descriptionOverride, photo->description),
     "alt": coalesce(titleOverride, photo->title, "Photo"),
@@ -29,18 +34,36 @@ const query = /* groq */ `
 }
 `;
 
+function normalizeItem(i, idx) {
+  if (!i?.url) return null;
+  return {
+    id: i._key ?? `${idx}`,
+    url: i.url,
+    alt: i.alt || "Photo",
+    title: i.title ?? null,
+    description: i.description ?? "",
+    capturedAt: i.capturedAt ?? null,
+    tags: i.tags || [],
+    // perf extras:
+    lqip: i.lqip || null,
+    width: i.width ?? null,
+    height: i.height ?? null,
+    ratio: i.ratio ?? (i.width && i.height ? i.width / i.height : null),
+  };
+}
+
 async function getCollection(slug) {
   const data = await sanityClient.fetch(query, { slug });
   if (!data) return null;
 
-  const items = (data.items || []).filter((i) => i?.url);
+  const items = (data.items || []).map(normalizeItem).filter(Boolean);
   if (!items.length) return null;
 
   return {
     id: data._id,
     title: data.title,
-    year: data.year ?? null, // keep if you still use it elsewhere
-    date: data.capturedAtOverride ?? null, // ← pass the new date
+    year: data.year ?? null,
+    date: data.capturedAtOverride ?? null,
     slug: data.slug,
     description: data.description || "",
     items,
@@ -48,7 +71,7 @@ async function getCollection(slug) {
 }
 
 export default async function Page({ params: paramsPromise }) {
-  const { slug } = await paramsPromise;
+  const { slug } = await paramsPromise; // await required on app router
   const collection = await getCollection(slug);
   if (!collection) notFound();
 
