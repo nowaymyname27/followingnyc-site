@@ -80,7 +80,7 @@ async function getGallery(slug) {
 }
 
 export default async function Page({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   const gallery = await getGallery(slug);
   if (!gallery) notFound();
 

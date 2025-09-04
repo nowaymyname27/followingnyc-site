@@ -11,16 +11,17 @@ const client = createClient({
   useCdn: true,
 });
 
-const TESTIMONIALS_QUERY = `
-*[_type=="testimonial"]|order(date desc, _createdAt desc){
+const TESTIMONIALS_QUERY = /* groq */ `
+*[_type=="testimonial"] | order(date desc, _createdAt desc){
   _id,
   quote,
   name,
   date,
-  item{
-    image{asset->{"url": url}},
-    titleOverride
-  }
+
+  // New fields (fallback to old collectionItem)
+  "photoUrl": coalesce(photo.asset->url, item.image.asset->url),
+  "photoAlt": coalesce(photo.alt, "Image"),
+  "titleOverride": coalesce(photoTitle, item.titleOverride)
 }
 `;
 

@@ -89,7 +89,7 @@ const DesktopCarousel = React.forwardRef(function DesktopCarousel(
   const rightPos =
     rightBox && centerPos
       ? {
-          left: centerPos.left + curBox.w + GAP_PX,
+          left: centerPos.left + (curBox?.w ?? 0) + GAP_PX,
           top: (hostH - rightBox.h) / 2,
         }
       : null;

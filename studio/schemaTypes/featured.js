@@ -6,13 +6,13 @@ export default {
   fields: [
     {
       name: "title",
-      title: "Title",
+      title: "Title (Outlet / Headline)",
       type: "string",
       validation: (Rule) => Rule.required().min(2),
     },
     {
-      name: "cover",
-      title: "Cover Image (Outlet/Org Logo or Screenshot)",
+      name: "photo",
+      title: "Photo",
       type: "image",
       options: { hotspot: true },
       fields: [
@@ -26,10 +26,9 @@ export default {
       validation: (Rule) => Rule.required(),
     },
     {
-      name: "item",
-      title: "Featured Photo",
-      type: "collectionItem", // uses your existing object schema
-      validation: (Rule) => Rule.required(),
+      name: "photoTitle",
+      title: "Photo Title (display)",
+      type: "string",
     },
     {
       name: "links",
@@ -48,7 +47,7 @@ export default {
   preview: {
     select: {
       title: "title",
-      media: "cover",
+      media: "photo",
       firstUrl: "links[0].url",
     },
     prepare({ title, media, firstUrl }) {

@@ -1,283 +1,241 @@
 // app/news/TestimonialsGrid.client.jsx
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import Image from "next/image";
 
-/* ---------------- Grid ---------------- */
+/**
+ * items[] shape (from TestimonialsSection query):
+ * {
+ *   _id,
+ *   quote,
+ *   name,
+ *   date,                // ISO string
+ *   photoUrl,            // image url
+ *   photoAlt,            // alt from schema
+ *   photoTitle           // optional display title for the photo
+ * }
+ */
 
-export default function TestimonialsGrid({ items }) {
-  return (
-    <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-      {items?.length ? (
-        <Tiles items={items} />
-      ) : (
-        <p className="text-neutral-500">No testimonials yet.</p>
-      )}
-    </div>
-  );
-}
+export default function TestimonialsGrid({ items = [] }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(null);
 
-function Tiles({ items }) {
-  const [open, setOpen] = React.useState(false);
-  const [idx, setIdx] = React.useState(0);
-
-  const onOpen = (i) => {
-    setIdx(i);
+  const openOverlay = (t) => {
+    setActive(t);
     setOpen(true);
   };
-
-  const onClose = () => setOpen(false);
-  const onPrev = () => setIdx((n) => (n - 1 + items.length) % items.length);
-  const onNext = () => setIdx((n) => (n + 1) % items.length);
+  const closeOverlay = () => {
+    setOpen(false);
+    setActive(null);
+  };
 
   return (
     <>
-      {items.map((t, i) => (
-        <TestimonialTile key={t._id} t={t} onOpen={() => onOpen(i)} />
-      ))}
-      {open && items.length > 0 ? (
-        <TestimonialOverlay
-          t={items[idx]}
-          index={idx}
-          count={items.length}
-          onClose={onClose}
-          onPrev={onPrev}
-          onNext={onNext}
-        />
+      <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+        {items.length ? (
+          items.map((t) => (
+            <TestimonialCard
+              key={t._id}
+              t={t}
+              onOpenImage={() => openOverlay(t)}
+            />
+          ))
+        ) : (
+          <p className="text-neutral-500">No testimonials yet.</p>
+        )}
+      </div>
+
+      {open && active ? (
+        <SimpleTestimonialOverlay t={active} onClose={closeOverlay} />
       ) : null}
     </>
   );
 }
 
-/* ---------------- Tile (whole card is clickable) ---------------- */
+/* ---------------- Card (image opens overlay) ---------------- */
 
-function TestimonialTile({ t, onOpen }) {
-  const imgUrl = t?.item?.image?.asset?.url;
-  const collapsed = truncate(t?.quote || "", 220);
+const TestimonialCard = memo(function TestimonialCard({ t, onOpenImage }) {
+  const [expanded, setExpanded] = useState(false);
 
-  const onKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpen();
-    }
-  };
+  const imgUrl = t?.photoUrl || "";
+  const imgAlt = t?.photoAlt || t?.name || "Photo";
+  const titleText = t?.photoTitle || ""; // optional context about the photo
+
+  const dateStr = formatDate(t?.date);
+  const quote = String(t?.quote || "");
+  const maxChars = 220;
+  const isTruncated = quote.length > maxChars;
+  const preview = isTruncated ? truncate(quote, maxChars) : quote;
 
   return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={onKeyDown}
-      aria-label={`Open testimonial`}
-      className="relative h-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/10 cursor-pointer"
-    >
-      {/* Attribution row */}
-      <div className="flex items-center gap-3">
-        <div className="relative h-12 w-12 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-black/5">
-          {imgUrl ? (
-            <Image
-              src={imgUrl}
-              alt={t?.item?.titleOverride || t?.name || "Image"}
-              fill
-              sizes="48px"
-              className="object-cover"
-              priority={false}
-            />
-          ) : null}
+    <article className="relative h-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-sm">
+      {/* Image preview (click to open overlay) */}
+      {imgUrl ? (
+        <button
+          type="button"
+          onClick={onOpenImage}
+          aria-label={`Preview image for ${t?.name || "testimonial"}`}
+          className="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-neutral-100"
+        >
+          <Image
+            src={imgUrl}
+            alt={imgAlt}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-contain transition-transform duration-300 hover:scale-[1.02]"
+          />
+        </button>
+      ) : null}
+
+      {/* Name + date (placed ABOVE the testimonial text, after the picture) */}
+      <div className={imgUrl ? "mt-4" : ""}>
+        <div className="text-sm font-semibold leading-tight truncate">
+          {t?.name || "Anonymous"}
         </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold leading-tight truncate">
-            {t?.name || "Anonymous"}
-          </div>
-          <time className="text-xs text-neutral-500">
-            {t?.date
-              ? new Date(t.date).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
-              : ""}
-          </time>
+        <div className="flex items-center gap-2 text-xs text-neutral-500">
+          {dateStr && <time>{dateStr}</time>}
+          {titleText && (
+            <>
+              <span aria-hidden="true">•</span>
+              <span className="truncate">{titleText}</span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Quote (allow expanding without opening overlay) */}
-      <div className="mt-4">
-        <details>
-          <summary
-            className="list-none cursor-pointer text-left"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+      {/* Quote with inline expand (no modal) */}
+      <figure className="mt-3">
+        <blockquote className="relative">
+          <p className="text-[15px] leading-relaxed text-neutral-800">
+            <span className="mr-1 text-neutral-400">“</span>
+            <span className="align-middle">{expanded ? quote : preview}</span>
+            <span className="ml-1 text-neutral-400">”</span>
+          </p>
+        </blockquote>
+        <figcaption className="sr-only">
+          Testimonial by {t?.name || "Anonymous"}
+        </figcaption>
+      </figure>
+
+      {isTruncated && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setExpanded((s) => !s)}
+            className="inline-flex items-center rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-white"
+            aria-expanded={expanded}
           >
-            <p className="text-[15px] leading-relaxed text-neutral-800">
-              <span className="mr-1 text-neutral-400">“</span>
-              <span className="align-middle">
-                {collapsed.isTruncated ? collapsed.text : t?.quote}
-              </span>
-              <span className="ml-1 text-neutral-400">”</span>
-            </p>
-            {collapsed.isTruncated ? (
-              <span className="mt-2 inline-block rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-700">
-                Read full
-              </span>
-            ) : null}
-          </summary>
-
-          {collapsed.isTruncated ? (
-            <div
-              className="mt-3"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              <p className="text-[15px] leading-relaxed text-neutral-800">
-                <span className="mr-1 text-neutral-400">“</span>
-                <span className="align-middle">{t?.quote}</span>
-                <span className="ml-1 text-neutral-400">”</span>
-              </p>
-            </div>
-          ) : null}
-        </details>
-      </div>
+            {expanded ? "Show less" : "Read full"}
+          </button>
+        </div>
+      )}
     </article>
   );
-}
+});
 
-/* ---------------- Overlay (click outside to close) ---------------- */
+/* ---------------- Simple Overlay ---------------- */
 
-function TestimonialOverlay({ t, index, count, onClose, onPrev, onNext }) {
-  const dialogRef = React.useRef(null);
-  const panelRef = React.useRef(null);
+function SimpleTestimonialOverlay({ t, onClose }) {
+  const dialogRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     dialogRef.current?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") onPrev();
-      if (e.key === "ArrowRight") onNext();
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose, onPrev, onNext]);
+  }, [onClose]);
 
-  const photoUrl = t?.item?.image?.asset?.url;
-
-  // inside TestimonialOverlay
   const handleRootClick = (e) => {
-    // If click is NOT inside any element marked as a panel, close.
-    if (!e.target.closest("[data-overlay-panel]")) {
-      onClose();
-    }
+    if (!e.target.closest("[data-overlay-panel]")) onClose();
   };
+
+  const imgUrl = t?.photoUrl || "";
+  const imgAlt = t?.photoAlt || t?.name || "Photo";
+  const name = t?.name || "Anonymous";
+  const dateStr = formatDate(t?.date);
+  const titleText = t?.photoTitle || "";
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Testimonial details"
+      aria-label="Testimonial preview"
       tabIndex={-1}
       ref={dialogRef}
-      className="fixed inset-0 z-50 flex md:items-center md:justify-center"
-      onClick={handleRootClick} // <-- updated outside click logic
+      className="fixed inset-0 z-50 flex items-start md:items-center justify-center"
+      onClick={handleRootClick}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      {/* Content */}
-      <div className="relative z-10 w-full md:max-w-6xl p-4 sm:p-6 md:p-8 overflow-y-auto max-h-screen">
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_380px] gap-6 md:gap-8 md:items-start">
+      {/* Panel */}
+      <div
+        data-overlay-panel
+        className="relative z-10 w-full max-w-6xl mx-4 my-6 md:my-10 rounded-2xl bg-white shadow-[0_16px_60px_rgba(0,0,0,0.35)] overflow-hidden"
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-sm text-neutral-700 hover:bg-neutral-100 z-10"
+        >
+          ✕
+        </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px] gap-0 md:gap-6">
           {/* Large image */}
-          <div className="relative flex justify-center">
-            <div
-              data-overlay-panel
-              className="relative inline-block bg-white rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
-            >
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={t?.item?.titleOverride || "Image"}
-                  className="block max-w-full md:max-h-[78vh] max-h-[62vh] object-contain"
-                  draggable={false}
-                />
-              ) : (
-                <div className="p-16 text-neutral-400">No image provided.</div>
-              )}
-            </div>
+          <div className="relative bg-neutral-50 min-h-[40vh] md:min-h-[60vh] p-4 flex items-center justify-center">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={imgAlt}
+                className="max-h-[78vh] md:max-h-[72vh] w-auto object-contain"
+                draggable={false}
+              />
+            ) : (
+              <div className="text-neutral-400">No image</div>
+            )}
           </div>
 
-          {/* Details panel */}
-          <div className="relative">
-            <div
-              data-overlay-panel
-              className="rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="min-w-0">
-                  <h2 className="text-lg font-semibold truncate">
-                    {t?.item?.titleOverride || "Untitled image"}
-                  </h2>
-                  <p className="text-sm text-neutral-700">
-                    {t?.name || "Anonymous"}
-                  </p>
-                  <time className="block text-xs text-neutral-500">
-                    {t?.date
-                      ? new Date(t.date).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : ""}
-                  </time>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {count > 1 ? (
-                    <>
-                      <button
-                        onClick={onPrev}
-                        aria-label="Previous"
-                        className="rounded-full bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
-                      >
-                        ‹
-                      </button>
-                      <span className="text-xs text-neutral-600 tabular-nums">
-                        {index + 1} / {count}
-                      </span>
-                      <button
-                        onClick={onNext}
-                        aria-label="Next"
-                        className="rounded-full bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
-                      >
-                        ›
-                      </button>
-                    </>
-                  ) : null}
-                  <button
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-full px-2 py-0.5 text-sm hover:bg-neutral-50"
-                  >
-                    ✕
-                  </button>
-                </div>
+          {/* Side panel: testimonial details */}
+          <aside className="p-5 md:p-6 border-t md:border-t-0 md:border-l border-neutral-200">
+            <div className="mb-3">
+              <h2 className="text-lg md:text-xl font-semibold text-neutral-900">
+                {name}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                {dateStr && <time>{dateStr}</time>}
+                {titleText && (
+                  <>
+                    <span aria-hidden="true">•</span>
+                    <span className="truncate">{titleText}</span>
+                  </>
+                )}
               </div>
+            </div>
 
-              {/* Quote */}
-              {t?.quote ? (
+            {t?.quote ? (
+              <blockquote className="mt-2">
                 <p className="text-[15px] leading-relaxed text-neutral-800">
                   <span className="mr-1 text-neutral-400">“</span>
                   <span className="align-middle">{t.quote}</span>
                   <span className="ml-1 text-neutral-400">”</span>
                 </p>
-              ) : null}
-            </div>
-          </div>
+              </blockquote>
+            ) : (
+              <p className="text-sm text-neutral-500">
+                No testimonial provided.
+              </p>
+            )}
+          </aside>
         </div>
       </div>
     </div>
@@ -288,7 +246,19 @@ function TestimonialOverlay({ t, index, count, onClose, onPrev, onNext }) {
 
 function truncate(str, max = 220) {
   const s = String(str || "");
-  if (s.length <= max) return { text: s, isTruncated: false };
-  const cut = s.slice(0, max).replace(/\s+\S*$/, "");
-  return { text: `${cut}…`, isTruncated: true };
+  if (s.length <= max) return s;
+  return s.slice(0, max).replace(/\s+\S*$/, "") + "…";
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }

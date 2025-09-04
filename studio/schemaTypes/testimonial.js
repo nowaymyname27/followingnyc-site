@@ -11,12 +11,29 @@ export default {
       rows: 4,
       validation: (Rule) => Rule.required().min(1),
     },
+
+    /* REPLACEMENT FOR collectionItem */
     {
-      name: "item",
-      title: "Image (collection item)",
-      type: "collectionItem", // uses your existing object
+      name: "photo",
+      title: "Photo",
+      type: "image",
+      options: { hotspot: true },
+      fields: [
+        {
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          validation: (Rule) => Rule.required(),
+        },
+      ],
       validation: (Rule) => Rule.required(),
     },
+    {
+      name: "photoTitle",
+      title: "Photo Title (display)",
+      type: "string",
+    },
+
     {
       name: "name",
       title: "Name",
@@ -26,7 +43,7 @@ export default {
     {
       name: "date",
       title: "Date",
-      type: "datetime",
+      type: "date",
       validation: (Rule) => Rule.required(),
     },
   ],
@@ -34,7 +51,7 @@ export default {
     select: {
       title: "name",
       subtitle: "quote",
-      media: "item.image",
+      media: "photo",
     },
     prepare({ title, subtitle, media }) {
       return {

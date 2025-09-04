@@ -1,290 +1,284 @@
 // app/news/FeaturedGrid.client.jsx
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-/* ---------------- Grid ---------------- */
+/**
+ * items[] shape (from FeaturedSection query):
+ * {
+ *   _id, title, photoUrl, photoAlt, links[], note
+ * }
+ */
 
-export default function FeaturedGrid({ items }) {
-  return (
-    <div className="px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {items?.length ? (
-        <Tiles items={items} />
-      ) : (
-        <p className="text-neutral-500 col-span-full">No features yet.</p>
-      )}
-    </div>
-  );
-}
+export default function FeaturedGrid({ items = [] }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(null);
 
-function Tiles({ items }) {
-  const [open, setOpen] = React.useState(false);
-  const [idx, setIdx] = React.useState(0);
-
-  const onOpen = (i) => {
-    setIdx(i);
+  const openOverlay = (feature) => {
+    setActive(feature);
     setOpen(true);
   };
-
-  const onClose = () => setOpen(false);
-  const onPrev = () => setIdx((n) => (n - 1 + items.length) % items.length);
-  const onNext = () => setIdx((n) => (n + 1) % items.length);
+  const closeOverlay = () => {
+    setOpen(false);
+    setActive(null);
+  };
 
   return (
     <>
-      {items.map((f, i) => (
-        <FeatureTile key={f._id} feature={f} onOpen={() => onOpen(i)} />
-      ))}
-      {open && items.length > 0 ? (
-        <FeatureOverlay
-          feature={items[idx]}
-          index={idx}
-          count={items.length}
-          onClose={onClose}
-          onPrev={onPrev}
-          onNext={onNext}
-        />
+      <div className="px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.length ? (
+          items.map((f) => (
+            <FeatureCard
+              key={f._id}
+              feature={f}
+              onOpen={() => openOverlay(f)}
+            />
+          ))
+        ) : (
+          <p className="text-neutral-500 col-span-full">No features yet.</p>
+        )}
+      </div>
+
+      {open && active ? (
+        <SimpleFeatureOverlay feature={active} onClose={closeOverlay} />
       ) : null}
     </>
   );
 }
 
-/* ---------------- Tile (click to open) ---------------- */
+function FeatureCard({ feature, onOpen }) {
+  const photoUrl = feature?.photoUrl || "";
+  const titleText = feature?.title || "Featured";
+  const imgAlt = feature?.photoAlt || titleText;
 
-function FeatureTile({ feature, onOpen }) {
-  const photoUrl = feature?.item?.image?.asset?.url;
-  const logoUrl = feature?.cover?.asset?.url;
-  const links = Array.isArray(feature?.links) ? feature.links : [];
-  const visible = links.slice(0, 3);
-  const hidden = links.slice(3);
+  const links = Array.isArray(feature?.links)
+    ? feature.links.filter((l) => l?.url)
+    : [];
+
+  const primaryUrl = links[0]?.url || null;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <article
       className={[
-        "group relative block w-full overflow-hidden rounded-2xl text-left",
+        "group relative w-full overflow-hidden rounded-2xl",
         "border border-neutral-200 bg-white shadow-sm hover:shadow-md",
-        "focus:outline-none focus:ring-2 focus:ring-black/10",
+        "focus-within:ring-2 focus-within:ring-black/10",
       ].join(" ")}
-      aria-label={`Open feature ${feature?.title || "Untitled"}`}
     >
-      {/* Featured photo */}
-      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl bg-neutral-100">
+      {/* Media (opens overlay) */}
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Preview: ${titleText}`}
+        className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl bg-neutral-100"
+      >
         {photoUrl ? (
           <Image
             src={photoUrl}
-            alt={feature?.item?.titleOverride || feature?.title || "Featured"}
+            alt={imgAlt}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-contain"
+            className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+            priority={false}
           />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-neutral-400">
             No image
           </div>
         )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-      </div>
+      </button>
 
-      {/* Bottom overlay */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-        <div className="flex items-center gap-3">
-          {logoUrl ? (
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white/70 ring-1 ring-black/10">
-              <Image
-                src={logoUrl}
-                alt="Outlet logo"
-                fill
-                className="object-contain p-1.5"
-                sizes="40px"
-              />
-            </div>
-          ) : null}
-          <h3 className="min-w-0 text-white text-base sm:text-lg font-semibold tracking-tight drop-shadow">
-            <span className="line-clamp-2">{feature?.title || "Untitled"}</span>
-          </h3>
+      {/* Content (title + links + note) */}
+      <div className="px-4 sm:px-5 py-3">
+        <h3 className="text-base sm:text-lg font-semibold tracking-tight text-neutral-900">
+          {primaryUrl ? (
+            <a
+              href={primaryUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline"
+            >
+              {titleText}
+            </a>
+          ) : (
+            titleText
+          )}
+        </h3>
+
+        <div className="mt-2">
+          {links.length > 0 ? (
+            <LinksChips links={links} />
+          ) : (
+            <span className="text-xs text-neutral-500">No links provided</span>
+          )}
         </div>
 
-        {/* Link preview */}
-        {links.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {visible.map((l, i) => (
-              <span
-                key={`${feature._id}-vis-${i}`}
-                className="inline-flex items-center rounded-full bg-white/80 backdrop-blur px-2.5 py-1 text-xs font-medium text-neutral-800 ring-1 ring-black/10"
-              >
-                {safeHost(l.url)}
-              </span>
-            ))}
-            {hidden.length > 0 ? (
-              <span className="inline-flex items-center rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-700 ring-1 ring-black/10">
-                +{hidden.length} more
-              </span>
-            ) : null}
-          </div>
+        {feature?.note ? (
+          <p className="mt-3 text-xs leading-relaxed text-neutral-600 line-clamp-3">
+            {feature.note}
+          </p>
         ) : null}
       </div>
-    </button>
+    </article>
   );
 }
 
-/* ---------------- Overlay ---------------- */
+/* ---------------- Simple Overlay ---------------- */
 
-function FeatureOverlay({ feature, index, count, onClose, onPrev, onNext }) {
-  const dialogRef = React.useRef(null);
+function SimpleFeatureOverlay({ feature, onClose }) {
+  const dialogRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     dialogRef.current?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") onPrev();
-      if (e.key === "ArrowRight") onNext();
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose, onPrev, onNext]);
-
-  const logoUrl = feature?.cover?.asset?.url;
-  const photoUrl = feature?.item?.image?.asset?.url;
-  const links = Array.isArray(feature?.links) ? feature.links : [];
+  }, [onClose]);
 
   const handleRootClick = (e) => {
     if (!e.target.closest("[data-overlay-panel]")) onClose();
   };
 
+  const photoUrl = feature?.photoUrl || "";
+  const titleText = feature?.title || "Featured";
+  const imgAlt = feature?.photoAlt || titleText;
+  const links = Array.isArray(feature?.links)
+    ? feature.links.filter((l) => l?.url)
+    : [];
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Feature details"
+      aria-label="Feature preview"
       tabIndex={-1}
       ref={dialogRef}
-      className="fixed inset-0 z-50 flex md:items-center md:justify-center"
+      className="fixed inset-0 z-50 flex items-start md:items-center justify-center"
       onClick={handleRootClick}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      {/* Content */}
-      <div className="relative z-10 w-full md:max-w-6xl p-4 sm:p-6 md:p-8 overflow-y-auto max-h-screen">
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_380px] gap-6 md:gap-8 md:items-start">
+      {/* Panel */}
+      <div
+        data-overlay-panel
+        className="relative z-10 w-full max-w-6xl mx-4 my-6 md:my-10 rounded-2xl bg-white shadow-[0_16px_60px_rgba(0,0,0,0.35)] overflow-hidden"
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-sm text-neutral-700 hover:bg-neutral-100 z-10"
+        >
+          ✕
+        </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px] gap-0 md:gap-6">
           {/* Image */}
-          <div className="relative flex justify-center">
-            <div
-              data-overlay-panel
-              className="relative inline-block bg-white rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
-            >
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={
-                    feature?.item?.titleOverride || feature?.title || "Featured"
-                  }
-                  className="block max-w-full md:max-h-[78vh] max-h-[62vh] object-contain"
-                  draggable={false}
-                />
-              ) : (
-                <div className="p-16 text-neutral-400">No image provided.</div>
-              )}
-            </div>
+          <div className="relative bg-neutral-50 min-h-[40vh] md:min-h-[60vh] p-4 flex items-center justify-center">
+            {photoUrl ? (
+              // Use plain img to avoid layout jumps in modal
+              <img
+                src={photoUrl}
+                alt={imgAlt}
+                className="max-h-[78vh] md:max-h-[72vh] w-auto object-contain"
+                draggable={false}
+              />
+            ) : (
+              <div className="text-neutral-400">No image</div>
+            )}
           </div>
 
-          {/* Details */}
-          <div className="relative">
-            <div
-              data-overlay-panel
-              className="rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-5 md:p-6"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {logoUrl ? (
-                    <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-black/10">
-                      <Image
-                        src={logoUrl}
-                        alt="Outlet logo"
-                        fill
-                        className="object-contain p-1.5"
-                        sizes="40px"
-                      />
-                    </span>
-                  ) : null}
-                  <h2 className="text-lg font-semibold truncate">
-                    {feature?.title || "Untitled feature"}
-                  </h2>
-                </div>
+          {/* Side panel: title + links */}
+          <aside className="p-5 md:p-6 border-t md:border-t-0 md:border-l border-neutral-200">
+            <h2 className="text-lg md:text-xl font-semibold text-neutral-900">
+              {titleText}
+            </h2>
 
-                <div className="flex items-center gap-2">
-                  {count > 1 ? (
-                    <>
-                      <button
-                        onClick={onPrev}
-                        aria-label="Previous"
-                        className="rounded-full bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
-                      >
-                        ‹
-                      </button>
-                      <span className="text-xs text-neutral-600 tabular-nums">
-                        {index + 1} / {count}
-                      </span>
-                      <button
-                        onClick={onNext}
-                        aria-label="Next"
-                        className="rounded-full bg-white px-2 py-1 text-sm shadow hover:bg-neutral-50"
-                      >
-                        ›
-                      </button>
-                    </>
-                  ) : null}
-                  <button
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="rounded-full px-2 py-0.5 text-sm hover:bg-neutral-50"
-                  >
-                    ✕
-                  </button>
+            {links.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                <h3 className="text-sm font-medium text-neutral-700">Links</h3>
+                <div className="flex flex-wrap gap-2">
+                  {links.map((l, i) => (
+                    <a
+                      key={`ol-${i}`}
+                      href={l.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-800 ring-1 ring-black/10 hover:bg-white"
+                      aria-label={`Open ${safeHost(l.url)}`}
+                    >
+                      {safeHost(l.url)}
+                    </a>
+                  ))}
                 </div>
               </div>
+            ) : (
+              <p className="mt-4 text-xs text-neutral-500">No links provided</p>
+            )}
 
-              {/* Title override */}
-              {feature?.item?.titleOverride ? (
-                <p className="text-sm text-neutral-700 mb-3">
-                  {feature.item.titleOverride}
-                </p>
-              ) : null}
-
-              {/* Links */}
-              {links.length > 0 ? (
-                <div>
-                  <h3 className="text-sm font-medium text-neutral-700 mb-2">
-                    Links
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {links.map((l, i) => (
-                      <a
-                        key={`link-${i}`}
-                        href={l.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center rounded-full bg-white/90 backdrop-blur px-2.5 py-1 text-xs font-medium text-neutral-800 ring-1 ring-black/10 hover:bg-white"
-                      >
-                        {safeHost(l.url)}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
+            {feature?.note ? (
+              <p className="mt-4 text-sm leading-relaxed text-neutral-700">
+                {feature.note}
+              </p>
+            ) : null}
+          </aside>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------------- Links chips (on card) ---------------- */
+
+function LinksChips({ links }) {
+  const visible = links.slice(0, 3);
+  const hidden = links.slice(3);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {visible.map((l, i) => (
+        <a
+          key={`vis-${i}`}
+          href={l.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-800 ring-1 ring-black/10 hover:bg-white"
+          aria-label={`Open ${safeHost(l.url)}`}
+        >
+          {safeHost(l.url)}
+        </a>
+      ))}
+
+      {hidden.length > 0 ? (
+        <details className="inline-block">
+          <summary className="list-none inline-flex cursor-pointer select-none items-center rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-white">
+            More ({hidden.length})
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {hidden.map((l, i) => (
+              <a
+                key={`hid-${i}`}
+                href={l.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-full bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-800 ring-1 ring-black/10 hover:bg-white"
+                aria-label={`Open ${safeHost(l.url)}`}
+              >
+                {safeHost(l.url)}
+              </a>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

@@ -11,16 +11,18 @@ const client = createClient({
   useCdn: true,
 });
 
-const FEATURED_QUERY = `
-*[_type=="featured"]|order(_createdAt desc){
+const FEATURED_QUERY = /* groq */ `
+*[_type=="featured"] | order(_createdAt desc){
   _id,
   title,
-  cover{asset->{"url": url}, alt},
-  item{
-    image{asset->{"url": url}},
-    titleOverride
-  },
-  links[]{url}
+
+  // New fields (with gentle fallback if some old docs still have cover/item)
+  "photoUrl": coalesce(photo.asset->url, cover.asset->url, item.image.asset->url),
+  "photoAlt": coalesce(photo.alt, cover.alt, "Featured"),
+  "titleOverride": coalesce(photoTitle, item.titleOverride),
+
+  links[]{url},
+  note
 }
 `;
 
