@@ -1,57 +1,33 @@
+// components/NavBarLight.jsx
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
+import {
+  LINKS_GALLERIES,
+  LINKS_COLLECTIONS,
+  NAV_BUTTONS,
+} from "@/lib/nav.data";
 
 export default function NavBarLight({
   brand = "FollowingNYC",
-  brandLogo = "/logo.png", // place in /public
+  brandLogo = "/logo.png",
   brandAlt = "FollowingNYC logo",
   menus,
   rightButtons,
 }) {
   const defaultMenus = menus ?? [
-    {
-      label: "Curated Galleries",
-      links: [
-        { label: "Collage", href: "/galleries/Collage" },
-        { label: "Hotel Rooms", href: "/galleries/hotel-rooms" },
-        {
-          label: "Water Tanks",
-          href: "/galleries/skyline-relics-nyc-water-tanks",
-        },
-        { label: "All Galleries", href: "/galleries" },
-      ],
-    },
-    {
-      label: "Collections",
-      links: [
-        {
-          label: "Philly Pride Parade",
-          href: "/collections/pride-philly-parade",
-        },
-        {
-          label: "Easter Parade",
-          href: "/collections/april-20-easter-parade-manhattan",
-        },
-        { label: "NYFW 2025", href: "/collections/nyfw" },
-        { label: "All Collections", href: "/collections" },
-      ],
-    },
+    { label: "Galleries", links: LINKS_GALLERIES },
+    { label: "Collections", links: LINKS_COLLECTIONS },
   ];
-
-  const buttons = rightButtons ?? [
-    { label: "Featured", href: "/featured", primary: false },
-    { label: "Contact Me", href: "/contact", primary: false },
-  ];
+  const buttons = rightButtons ?? NAV_BUTTONS;
 
   return (
-    <div className="fixed inset-x-0 top-6 z-40 bg-opacity-100">
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-40">
       <div className="flex w-full items-center justify-between px-4 md:px-6">
-        {/* Brand (left) — PNG in a light pill */}
         <a
           href="/"
           aria-label={brandAlt}
-          className="inline-flex items-center rounded-full border border-black/30 bg-white px-4 py-2 backdrop-blur-xl shadow-md hover:bg-black/5 h-10"
+          className="pointer-events-auto inline-flex items-center rounded-full border border-black/30 bg-white px-4 py-2 backdrop-blur-xl shadow-md hover:bg-black/5 h-10"
         >
           <Image
             src={brandLogo}
@@ -63,17 +39,13 @@ export default function NavBarLight({
           />
         </a>
 
-        {/* Right side: full menus on md+, compact on <md */}
-        <div className="flex items-center">
-          {/* Mobile menu */}
+        <div className="pointer-events-none flex items-center">
           <MobileMenu
             menus={defaultMenus}
             buttons={buttons}
             className="md:hidden"
           />
-
-          {/* Desktop/tablet menu */}
-          <div className="hidden md:flex items-center gap-6 rounded-full border border-black/30 bg-white px-4 py-2 text-black backdrop-blur-xl shadow-md">
+          <div className="pointer-events-auto hidden md:flex items-center gap-6 rounded-full border border-black/30 bg-white px-4 py-2 text-black backdrop-blur-xl shadow-md">
             {defaultMenus.map((m) => (
               <Dropdown key={m.label} label={m.label} links={m.links} />
             ))}
@@ -101,7 +73,6 @@ export default function NavBarLight({
 
 function Dropdown({ label, links }) {
   const [open, setOpen] = useState(false);
-
   const mainLinks = links.slice(0, 3);
   const allLink = links.find((l) => l.label.toLowerCase().startsWith("all"));
 
@@ -116,9 +87,7 @@ function Dropdown({ label, links }) {
         <span>{label}</span>
         <svg
           aria-hidden="true"
-          className={`h-3 w-3 transition-transform duration-200 ${
-            open ? "rotate-180" : "rotate-0"
-          } group-hover:rotate-180`}
+          className={`h-3 w-3 transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"} group-hover:rotate-180`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -132,11 +101,7 @@ function Dropdown({ label, links }) {
 
       <div
         className={`absolute right-0 top-full z-50 mt-2 min-w-[12rem] rounded-2xl border border-black/30 bg-white p-2 opacity-0 shadow-md transition-all duration-200
-        ${
-          open
-            ? "visible translate-y-0 opacity-100"
-            : "invisible -translate-y-1 opacity-0"
-        }
+        ${open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"}
         group-hover:visible group-hover:translate-y-0 group-hover:opacity-100`}
       >
         {mainLinks.map((l) => (
@@ -148,7 +113,6 @@ function Dropdown({ label, links }) {
             {l.label}
           </a>
         ))}
-
         {allLink && (
           <>
             <div className="my-2 border-t border-black/10" />
@@ -175,7 +139,7 @@ function MobileMenu({ menus, buttons, className = "" }) {
   };
 
   return (
-    <div className={className}>
+    <div className={["pointer-events-auto", className].join(" ")}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="rounded-full border border-black/30 bg-white px-4 py-2 text-xs font-semibold text-black backdrop-blur-xl shadow-md hover:bg-black/5"
@@ -195,7 +159,6 @@ function MobileMenu({ menus, buttons, className = "" }) {
                 <div className="px-3 py-2 text-sm font-bold text-black">
                   {m.label}
                 </div>
-
                 {main.map((l) => (
                   <a
                     key={l.href}
@@ -205,19 +168,17 @@ function MobileMenu({ menus, buttons, className = "" }) {
                     {l.label}
                   </a>
                 ))}
-
                 {all && (
                   <>
                     <div className="my-2 border-t border-black/10" />
                     <a
                       href={all.href}
-                      className="block rounded-xl px-3 py-2 text-xs font-semibold text-black hover:bg_black/5"
+                      className="block rounded-xl px-3 py-2 text-xs font-semibold text-black hover:bg-black/5"
                     >
                       {all.label}
                     </a>
                   </>
                 )}
-
                 {i < menus.length - 1 && (
                   <div className="my-3 border-t border-black/20" />
                 )}
@@ -226,7 +187,6 @@ function MobileMenu({ menus, buttons, className = "" }) {
           })}
 
           <div className="my-3 border-t border-black/20" />
-
           <div className="pt-2">
             {buttons.map((b, i) => (
               <div key={b.label}>

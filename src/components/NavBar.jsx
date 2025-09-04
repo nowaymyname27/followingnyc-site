@@ -1,48 +1,26 @@
+// components/NavBar.jsx
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
+import {
+  LINKS_GALLERIES,
+  LINKS_COLLECTIONS,
+  NAV_BUTTONS,
+} from "@/lib/nav.data";
 
 export default function NavBar({
   brand = "FollowingNYC",
-  brandLogo = "/logo.png", // put logo.png in /public
+  brandLogo = "/logo.png",
   brandAlt = "FollowingNYC logo",
   menus,
   rightButtons,
 }) {
+  // Use shared link/button data, but labels remain customizable per navbar
   const defaultMenus = menus ?? [
-    {
-      label: "Galleries",
-      links: [
-        { label: "Collage", href: "/galleries/Collage" },
-        { label: "Hotel Rooms", href: "/galleries/hotel-rooms" },
-        {
-          label: "Water Tanks",
-          href: "/galleries/skyline-relics-nyc-water-tanks",
-        },
-        { label: "All Galleries", href: "/galleries" },
-      ],
-    },
-    {
-      label: "Collections",
-      links: [
-        {
-          label: "Philly Pride Parade",
-          href: "/collections/pride-philly-parade",
-        },
-        {
-          label: "Easter Parade",
-          href: "/collections/april-20-easter-parade-manhattan",
-        },
-        { label: "NYFW 2025", href: "/collections/nyfw" },
-        { label: "All Collections", href: "/collections" },
-      ],
-    },
+    { label: "Galleries", links: LINKS_GALLERIES },
+    { label: "Collections", links: LINKS_COLLECTIONS },
   ];
-
-  const buttons = rightButtons ?? [
-    { label: "Featured", href: "/featured", primary: false },
-    { label: "Contact Me", href: "/contact", primary: false },
-  ];
+  const buttons = rightButtons ?? NAV_BUTTONS;
 
   return (
     <div className="fixed inset-x-0 top-6 z-40">
@@ -51,7 +29,7 @@ export default function NavBar({
         <a
           href="/"
           aria-label={brandAlt}
-          className="inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg hover:bg-white/70 h-10" // set pill height
+          className="inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg hover:bg-white/70 h-10"
         >
           <Image
             src={brandLogo}

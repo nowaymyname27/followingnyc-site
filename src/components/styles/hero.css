@@ -2,7 +2,7 @@
 
 /* Defaults WITH units so they work out of the box */
 :root {
-  --slide-fade-ms: 2000ms; /* crossfade between images */
+  --slide-fade-ms: 1000ms; /* crossfade between images */
   --mode-fade-ms: 900ms; /* mode container fade/transform */
 
   --kb0-sec: 16s; /* TripleColumn Ken Burns durations */
@@ -71,10 +71,10 @@
 
 /* Optional per-mode overrides (also WITH units) */
 .hero--fullscreen {
-  --slide-fade-ms: 900ms;
+  --slide-fade-ms: 1000ms;
 }
 .hero--side {
-  --mode-fade-ms: 900ms;
+  --mode-fade-ms: 1000ms;
 }
 .hero--triple {
   --kb0-sec: 12s;

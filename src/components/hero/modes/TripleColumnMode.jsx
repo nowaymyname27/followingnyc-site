@@ -5,8 +5,9 @@ export default function TripleColumnMode({
   slides = [],
   activeIndex = 0,
   active = false,
+  stepSize = 3, // how many new images per transition
 }) {
-  // Normalize slides so strings still work
+  // Normalize slides (strings still work)
   const norm = (it, i) =>
     typeof it === "string"
       ? { id: `s-${i}`, src: it, alt: "Column slide" }
@@ -17,14 +18,19 @@ export default function TripleColumnMode({
           description: it.description || "",
         };
 
-  const S = slides.map(norm);
-
+  const S = (slides || []).map(norm);
   const len = S.length || 1;
-  const colIdx = [
-    activeIndex % len,
-    (activeIndex + 1) % len,
-    (activeIndex + 2) % len,
-  ];
+
+  // Advance in "pages" of 3 so each transition shows 3 new images.
+  // Example: page 0 -> [0,1,2], page 1 -> [3,4,5], etc., wrapping cleanly.
+  const page = Math.floor(activeIndex / stepSize);
+  const start = (page * stepSize) % len;
+
+  // Build up to 3 unique indices for the columns, wrapping and skipping dups
+  const colIdx = [];
+  for (let k = 0; k < Math.min(3, len); k++) {
+    colIdx.push((start + k) % len);
+  }
 
   return (
     <div
@@ -36,7 +42,6 @@ export default function TripleColumnMode({
       <div
         className={[
           "relative h-[75vh]",
-          // Safe widths so the card never bleeds offscreen
           "w-[min(70vw,calc(100vw-2rem))]",
           "md:w-[min(62vw,calc(100vw-3rem))]",
           "lg:w-[min(58vw,calc(100vw-3.5rem))]",
@@ -44,17 +49,19 @@ export default function TripleColumnMode({
           "overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 bg-black/10 p-3",
         ].join(" ")}
       >
-        <div className="grid h-full w-full grid-cols-3 gap-3">
-          {[0, 1, 2].map((col) => {
-            const current = S[colIdx[col]] || { alt: "" };
-
+        <div
+          className={`grid h-full w-full ${len >= 3 ? "grid-cols-3" : len === 2 ? "grid-cols-2" : "grid-cols-1"} gap-3`}
+        >
+          {colIdx.map((idx, col) => {
+            const current = S[idx] || { alt: "" };
             return (
               <div
                 key={col}
                 className="group relative overflow-hidden rounded-2xl bg-black/20"
               >
+                {/* We still render all images per column to keep your fade, but only the 'idx' is visible */}
                 {S.map((s, i) => {
-                  const isActive = i === colIdx[col];
+                  const isActive = i === idx;
                   return (
                     <img
                       key={`${col}-${s.id}`}
@@ -68,7 +75,6 @@ export default function TripleColumnMode({
                       ].join(" ")}
                       loading={i === 0 ? "eager" : "lazy"}
                       style={{
-                        // Stagger the fade a touch per column (keep your original delay idea)
                         transitionDelay: isActive ? `${col * 120}ms` : "0ms",
                       }}
                     />
