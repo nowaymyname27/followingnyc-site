@@ -1,8 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 
 export default function NavBar({
   brand = "FollowingNYC",
+  brandLogo = "/logo.png", // put logo.png in /public
+  brandAlt = "FollowingNYC logo",
   menus,
   rightButtons,
 }) {
@@ -47,10 +50,17 @@ export default function NavBar({
         {/* Brand (left) */}
         <a
           href="/"
-          className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold tracking-tight text-white backdrop-blur-xl shadow-lg hover:bg-white/15"
-          aria-label={brand}
+          aria-label={brandAlt}
+          className="inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg hover:bg-white/70 h-10" // set pill height
         >
-          {brand}
+          <Image
+            src={brandLogo}
+            alt={brandAlt}
+            width={160}
+            height={40}
+            priority
+            className="h-10 w-auto"
+          />
         </a>
 
         {/* Right side: full menus on md+, compact on <md */}
@@ -181,7 +191,6 @@ function MobileMenu({ menus, buttons, className = "" }) {
             const { main, all } = splitLinks(m.links);
             return (
               <div key={m.label} className="mb-4 last:mb-0">
-                {/* Bigger, bolder section title */}
                 <div className="px-3 py-2 text-sm font-bold text-white">
                   {m.label}
                 </div>
@@ -208,7 +217,6 @@ function MobileMenu({ menus, buttons, className = "" }) {
                   </>
                 )}
 
-                {/* Section separator */}
                 {i < menus.length - 1 && (
                   <div className="my-3 border-t border-white/20" />
                 )}
@@ -216,13 +224,11 @@ function MobileMenu({ menus, buttons, className = "" }) {
             );
           })}
 
-          {/* Separator before News/Contact */}
           <div className="my-3 border-t border-white/20" />
 
           <div className="pt-2">
             {buttons.map((b, i) => (
               <div key={b.label}>
-                {/* Bigger label for "News" / "Contact" */}
                 <a
                   href={b.href}
                   className="block rounded-xl px-3 py-2 text-sm font-bold text-white hover:bg-white/10"

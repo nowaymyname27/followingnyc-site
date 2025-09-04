@@ -1,8 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 
 export default function NavBarLight({
   brand = "FollowingNYC",
+  brandLogo = "/logo.png", // place in /public
+  brandAlt = "FollowingNYC logo",
   menus,
   rightButtons,
 }) {
@@ -44,13 +47,20 @@ export default function NavBarLight({
   return (
     <div className="fixed inset-x-0 top-6 z-40 bg-opacity-100">
       <div className="flex w-full items-center justify-between px-4 md:px-6">
-        {/* Brand (left) */}
+        {/* Brand (left) — PNG in a light pill */}
         <a
           href="/"
-          className="rounded-full border border-black/30 bg-white px-4 py-2 text-sm font-semibold tracking-tight text-black backdrop-blur-xl shadow-md hover:bg-black/5"
-          aria-label={brand}
+          aria-label={brandAlt}
+          className="inline-flex items-center rounded-full border border-black/30 bg-white px-4 py-2 backdrop-blur-xl shadow-md hover:bg-black/5 h-10"
         >
-          {brand}
+          <Image
+            src={brandLogo}
+            alt={brandAlt}
+            width={160}
+            height={40}
+            priority
+            className="h-10 w-auto"
+          />
         </a>
 
         {/* Right side: full menus on md+, compact on <md */}
@@ -92,7 +102,6 @@ export default function NavBarLight({
 function Dropdown({ label, links }) {
   const [open, setOpen] = useState(false);
 
-  // Show first 3 items, then a separator, then the "All ..." link
   const mainLinks = links.slice(0, 3);
   const allLink = links.find((l) => l.label.toLowerCase().startsWith("all"));
 
@@ -105,7 +114,6 @@ function Dropdown({ label, links }) {
         aria-expanded={open}
       >
         <span>{label}</span>
-        {/* Chevron indicator */}
         <svg
           aria-hidden="true"
           className={`h-3 w-3 transition-transform duration-200 ${
@@ -184,7 +192,6 @@ function MobileMenu({ menus, buttons, className = "" }) {
             const { main, all } = splitLinks(m.links);
             return (
               <div key={m.label} className="mb-4 last:mb-0">
-                {/* Bigger, bolder section title (light theme) */}
                 <div className="px-3 py-2 text-sm font-bold text-black">
                   {m.label}
                 </div>
@@ -204,14 +211,13 @@ function MobileMenu({ menus, buttons, className = "" }) {
                     <div className="my-2 border-t border-black/10" />
                     <a
                       href={all.href}
-                      className="block rounded-xl px-3 py-2 text-xs font-semibold text-black hover:bg-black/5"
+                      className="block rounded-xl px-3 py-2 text-xs font-semibold text-black hover:bg_black/5"
                     >
                       {all.label}
                     </a>
                   </>
                 )}
 
-                {/* Section separator between Galleries / Collections */}
                 {i < menus.length - 1 && (
                   <div className="my-3 border-t border-black/20" />
                 )}
@@ -219,20 +225,17 @@ function MobileMenu({ menus, buttons, className = "" }) {
             );
           })}
 
-          {/* Separator before News/Contact */}
           <div className="my-3 border-t border-black/20" />
 
           <div className="pt-2">
             {buttons.map((b, i) => (
               <div key={b.label}>
-                {/* Bigger label for "News" / "Contact" */}
                 <a
                   href={b.href}
                   className="block rounded-xl px-3 py-2 text-sm font-bold text-black hover:bg-black/5"
                 >
                   {b.label}
                 </a>
-                {/* Separator between News and Contact */}
                 {i < buttons.length - 1 && (
                   <div className="my-2 border-t border-black/10" />
                 )}

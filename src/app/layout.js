@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "FollowingNYC",
   description: "Welcome to New York",
+  icons: {
+    icon: "/favicon.svg", // main favicon
+  },
 };
 
 export default function RootLayout({ children }) {
