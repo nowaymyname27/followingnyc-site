@@ -9,6 +9,7 @@ import heroSlide from "./heroSlide";
 import link from "./link";
 import featured from "./featured";
 import testimonial from "./testimonial";
+import person from "./person";
 
 export const schemaTypes = [
   tag,
@@ -22,4 +23,5 @@ export const schemaTypes = [
   link,
   featured,
   testimonial,
+  person,
 ];

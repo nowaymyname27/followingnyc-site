@@ -1,6 +1,7 @@
-// app/news/page.jsx
+// app/featured/page.jsx
 import NavBarLight from "@/components/NavBarLight";
 import FeaturedSection from "./FeaturedSection";
+import PeopleSection from "./PeopleSection";
 import TestimonialsSection from "./TestimonialsSection";
 
 export const revalidate = 900;
@@ -13,6 +14,7 @@ export default function FeaturedPage() {
       <main className="pt-24 min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-6xl px-4 py-10 space-y-12">
           <FeaturedSection />
+          <PeopleSection />
           <TestimonialsSection />
         </div>
       </main>
