@@ -47,21 +47,23 @@ function GalleryCardInner({ gallery, isVisible, href, priority = false }) {
 
         {/* Right: content */}
         <div className="md:col-span-5 flex flex-col h-auto md:h-full bg-white">
-          <div className="flex flex-col justify-center items-center flex-none md:flex-[1] text-center px-5 sm:px-6 md:px-6 pt-5 md:pt-0">
-            <h2 className="text-3xl sm:text-4xl md:text-4xl font-semibold tracking-tight">
+          {/* Heading + description together */}
+          <div className="flex-1 flex flex-col px-5 sm:px-6 md:px-8 pt-5 md:pt-6 pb-4 md:pb-4 overflow-y-auto">
+            <h2 className="text-3xl sm:text-4xl md:text-4xl font-semibold tracking-tight text-center">
               {title || "Untitled Gallery"}
             </h2>
             {year ? (
-              <div className="text-sm text-neutral-500 mt-2">{year}</div>
+              <div className="text-sm text-neutral-500 mt-2 text-center">
+                {year}
+              </div>
             ) : null}
-          </div>
 
-          <div className="flex-1 px-5 sm:px-6 md:px-8 pb-4 md:py-4 overflow-visible md:overflow-y-auto">
-            <p className="text-neutral-700 leading-relaxed text-base sm:text-[17px]">
+            <p className="mt-4 text-neutral-700 leading-relaxed text-base sm:text-[17px]">
               {description || "No description provided."}
             </p>
           </div>
 
+          {/* Footer */}
           {href && (
             <div className="px-5 sm:px-6 md:px-8 pb-6 flex-none">
               <span className="inline-flex items-center px-4 py-2 rounded-xl border border-neutral-300 bg-white/70 text-sm font-medium pointer-events-none">
