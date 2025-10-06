@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { SiInstagram } from "react-icons/si";
 
 export default function WelcomeBox({
   className = "",
@@ -11,29 +12,47 @@ export default function WelcomeBox({
     href: "/collections/pride-philly-parade",
   },
   floating = true,
+  // Pass any of these keys: instagram, tiktok, youtube, x, twitter
+  social = {},
 }) {
   const posClasses = floating
     ? [
         "absolute",
-        // Mobile + tablet: perfectly centered
         "left-1/2 -translate-x-1/2",
         "top-1/2 -translate-y-1/2",
         "z-20",
         "text-center",
-        // Large screens+: shift to center of left half
         "lg:left-1/4 lg:-translate-x-1/2 lg:text-left",
       ].join(" ")
     : "relative z-20";
+
+  const SocialIcon = ({ href, label, children }) => {
+    if (!href) return null;
+    return (
+      <a
+        href={href}
+        aria-label={label}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:scale-[1.03] active:scale-95 transition"
+        title={label}
+      >
+        {children}
+      </a>
+    );
+  };
+
+  const xHref = social.x || social.twitter; // prefer X if provided, else Twitter
+  const hasSocial =
+    social.instagram || social.tiktok || social.youtube || xHref;
 
   return (
     <div
       className={[
         posClasses,
         "rounded-3xl border border-white/20 bg-white/10",
-        // Width scales down responsively
         "w-[92vw] sm:w-[88vw] md:w-auto",
         "max-w-[18rem] sm:max-w-[20rem] md:max-w-[22rem] lg:max-w-[26rem] xl:max-w-[28rem]",
-        // Responsive padding
         "p-4 sm:p-5 md:p-6 lg:p-8",
         "text-white backdrop-blur-md md:backdrop-blur-lg shadow-2xl",
         className,
@@ -65,6 +84,16 @@ export default function WelcomeBox({
           {secondary.label}
         </a>
       </div>
+
+      {hasSocial && (
+        <div className="mt-4 md:mt-5 lg:mt-6">
+          <div className="flex items-center justify-center gap-2.5 sm:gap-3">
+            <SocialIcon href={social.instagram} label="Instagram">
+              <SiInstagram size={20} />
+            </SocialIcon>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

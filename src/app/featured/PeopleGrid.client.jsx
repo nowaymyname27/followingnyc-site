@@ -22,7 +22,7 @@ export default function PeopleGrid({ items }) {
                 src={portraitUrl}
                 alt={portraitAlt || name || "Person"}
                 fill
-                className="object-contain bg-surface transition-transform duration-300 ease-out group-hover:scale-105 group-hover:brightness-110"
+                className="object-contain bg-surface transition-transform duration-300 ease-out group-hover:scale-105"
                 sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
               />
             ) : (

@@ -3,6 +3,8 @@ import Hero from "@/components/Hero";
 import NavBar from "@/components/NavBar";
 import WelcomeBox from "@/components/WelcomeBox";
 import { sanityClient } from "@/lib/sanity.client";
+import { InstagramIcon } from "lucide-react";
+import { SiInstagram } from "react-icons/si";
 
 export const revalidate = 60;
 
@@ -71,7 +73,12 @@ export default async function Page() {
       mediaOverride={mediaOverride}
     >
       <NavBar brand="FollowingNYC" />
-      <WelcomeBox title={landing.pageTitle} />
+      <WelcomeBox
+        title={landing.pageTitle}
+        social={{
+          instagram: "https://instagram.com/followingnyc",
+        }}
+      />
     </Hero>
   );
 }
