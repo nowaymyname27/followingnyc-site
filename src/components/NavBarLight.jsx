@@ -10,9 +10,10 @@ export default function NavBarLight({
   brandAlt = "FollowingNYC logo",
 }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-6 z-40">
-      <div className="flex w-full items-center justify-between px-4 md:px-6">
-        {/* Brand */}
+    <div className="fixed inset-x-0 top-6 z-40 pointer-events-none">
+      {/* Make the flex wrapper NOT intercept clicks */}
+      <div className="flex w-full items-center justify-between px-4 md:px-6 pointer-events-none">
+        {/* Brand pill is clickable */}
         <a
           href="/"
           aria-label={brandAlt}
@@ -28,7 +29,7 @@ export default function NavBarLight({
           />
         </a>
 
-        {/* Nav links */}
+        {/* Nav pill is clickable */}
         <div className="pointer-events-auto flex items-center gap-6 rounded-full border border-black/30 bg-white px-4 py-2 text-black backdrop-blur-xl shadow-md">
           {[
             { label: "Galleries", href: "/galleries" },

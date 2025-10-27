@@ -9,7 +9,7 @@ export default function Hero({
   mode = "auto",
   layoutRangeMs = [9000, 16000], // can also be a number
   colors = [
-    "#1088c0ff",
+    "#0f77a7ff",
     "#2426a2ff",
     "#4b3295ff",
     "#a42d6aff",

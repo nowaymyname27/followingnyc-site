@@ -10,13 +10,14 @@ export default function NavBar({
   brandAlt = "FollowingNYC logo",
 }) {
   return (
-    <div className="fixed inset-x-0 top-6 z-40">
-      <div className="flex w-full items-center justify-between px-4 md:px-6">
-        {/* Brand */}
+    <div className="fixed inset-x-0 top-6 z-40 pointer-events-none">
+      {/* Make the flex wrapper NOT intercept clicks */}
+      <div className="flex w-full items-center justify-between px-4 md:px-6 pointer-events-none">
+        {/* Brand pill is clickable */}
         <a
           href="/"
           aria-label={brandAlt}
-          className="inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg h-10 transition-all duration-200 ease-out hover:bg-white/70 hover:scale-[1.02]"
+          className="pointer-events-auto inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg h-10 transition-all duration-200 ease-out hover:bg-white/70 hover:scale-[1.02]"
         >
           <Image
             src={brandLogo}
@@ -28,8 +29,8 @@ export default function NavBar({
           />
         </a>
 
-        {/* Nav links */}
-        <div className="flex items-center gap-6 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-white backdrop-blur-xl shadow-lg">
+        {/* Nav pill is clickable */}
+        <div className="pointer-events-auto flex items-center gap-6 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-white backdrop-blur-xl shadow-lg">
           {[
             { label: "Galleries", href: "/galleries" },
             { label: "Collections", href: "/collections" },

@@ -1,6 +1,27 @@
+// components/WelcomeBox.jsx
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SiInstagram } from "react-icons/si";
+import { sanityClient } from "@/lib/sanity.client";
+
+// GROQ (inline as requested): read the single landing page doc
+const LANDING_QUERY = `
+*[_type == "landingPage"][0]{
+  latestGallery,
+  latestCollection
+}
+`;
+
+// Normalize a user-entered value from Sanity into a usable href
+// - If it starts with "/", use it as-is (lets you paste full paths)
+// - Otherwise, treat it as a slug for the section (e.g., "Collage" -> "/galleries/Collage")
+function buildHref(section, value, fallback) {
+  if (!value || typeof value !== "string") return fallback;
+  const v = value.trim();
+  if (!v) return fallback;
+  if (v.startsWith("/")) return v; // full path supplied
+  return `/${section}/${v}`; // slug-only
+}
 
 export default function WelcomeBox({
   className = "",
@@ -15,6 +36,52 @@ export default function WelcomeBox({
   // Pass any of these keys: instagram, tiktok, youtube, x, twitter
   social = {},
 }) {
+  const [latest, setLatest] = useState({
+    galleryHref: null,
+    collectionHref: null,
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await sanityClient.fetch(LANDING_QUERY);
+        if (!mounted) return;
+
+        const galleryHref = buildHref(
+          "galleries",
+          data?.latestGallery,
+          primary.href
+        );
+        const collectionHref = buildHref(
+          "collections",
+          data?.latestCollection,
+          secondary.href
+        );
+
+        setLatest({ galleryHref, collectionHref });
+      } catch (err) {
+        // On any error, just keep the provided fallbacks
+        setLatest({
+          galleryHref: primary.href,
+          collectionHref: secondary.href,
+        });
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.warn(
+            "WelcomeBox: failed to fetch landing page latest links:",
+            err
+          );
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+    // Only depend on the fallback hrefs so we can rebuild links if those props change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primary.href, secondary.href]);
+
   const posClasses = floating
     ? [
         "absolute",
@@ -46,6 +113,9 @@ export default function WelcomeBox({
   const hasSocial =
     social.instagram || social.tiktok || social.youtube || xHref;
 
+  const primaryHref = latest.galleryHref ?? primary.href;
+  const secondaryHref = latest.collectionHref ?? secondary.href;
+
   return (
     <div
       className={[
@@ -72,13 +142,13 @@ export default function WelcomeBox({
 
       <div className="flex flex-col gap-2.5 sm:gap-3 md:gap-4">
         <a
-          href={primary.href}
+          href={primaryHref}
           className="w-full rounded-xl bg-white px-4 py-2 md:py-3 lg:py-3.5 text-center text-sm md:text-base font-semibold text-black hover:bg-white/90"
         >
           {primary.label}
         </a>
         <a
-          href={secondary.href}
+          href={secondaryHref}
           className="w-full rounded-xl border border-white/30 bg-white/10 px-4 py-2 md:py-3 lg:py-3.5 text-center text-sm md:text-base font-semibold text-white hover:bg-white/20"
         >
           {secondary.label}

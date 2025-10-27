@@ -1,4 +1,4 @@
-// landingPage.js
+// /schemaTypes/landingPage.js
 export default {
   name: "landingPage",
   title: "Landing Page",
@@ -23,6 +23,21 @@ export default {
       validation: (Rule) => Rule.min(1).error("Add at least one slide."),
       options: { layout: "grid" },
     },
+
+    // New fields
+    {
+      name: "latestGallery",
+      title: "Latest Gallery",
+      type: "string",
+      description: "To display for the latest gallery section.",
+    },
+    {
+      name: "latestCollection",
+      title: "Latest Collection",
+      type: "string",
+      description: "To display for the latest collection section.",
+    },
+
     {
       name: "tags",
       type: "array",
