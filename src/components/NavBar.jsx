@@ -6,7 +6,7 @@ import { NAV_BUTTONS } from "@/lib/nav.data";
 
 export default function NavBar({
   brand = "FollowingNYC",
-  brandLogo = "/logo.png",
+  brandLogo = "/logo_white.png",
   brandAlt = "FollowingNYC logo",
 }) {
   return (
@@ -17,7 +17,7 @@ export default function NavBar({
         <a
           href="/"
           aria-label={brandAlt}
-          className="pointer-events-auto inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg h-10 transition-all duration-200 ease-out hover:bg-white/70 hover:scale-[1.02]"
+          className="pointer-events-auto inline-flex items-center rounded-full border border-white/50 bg-white/10 px-4 py-2 backdrop-blur-xl shadow-lg h-10 transition-all duration-200 ease-out hover:bg-black/30 hover:scale-[1.02]"
         >
           <Image
             src={brandLogo}
