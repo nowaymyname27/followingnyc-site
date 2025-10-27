@@ -1,11 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ["sanity", "next-sanity", "@sanity/vision"],
+  experimental: { externalDir: true }, // allows ../ imports
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.sanity.io" },
-      { protocol: "https", hostname: "images.sanitycdn.com" }, // if you ever mix Unsplash
+      { protocol: "https", hostname: "images.sanitycdn.com" },
     ],
-    formats: ["image/avif", "image/webp"],
+    unoptimized: true, // disable Vercel Image Optimization
   },
 };
 
