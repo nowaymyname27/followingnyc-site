@@ -1,4 +1,3 @@
-// /schemaTypes/landingPage.js
 export default {
   name: "landingPage",
   title: "Landing Page",
@@ -24,18 +23,20 @@ export default {
       options: { layout: "grid" },
     },
 
-    // New fields
+    // Now reference real docs
     {
       name: "latestGallery",
       title: "Latest Gallery",
-      type: "string",
-      description: "To display for the latest gallery section.",
+      type: "reference",
+      to: [{ type: "gallery" }],
+      description: "Displayed in the latest gallery section.",
     },
     {
       name: "latestCollection",
       title: "Latest Collection",
-      type: "string",
-      description: "To display for the latest collection section.",
+      type: "reference",
+      to: [{ type: "collection" }],
+      description: "Displayed in the latest collection section.",
     },
 
     {

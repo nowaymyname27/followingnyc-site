@@ -7,8 +7,8 @@ import { sanityClient } from "@/lib/sanity.client";
 // GROQ (inline as requested): read the single landing page doc
 const LANDING_QUERY = `
 *[_type == "landingPage"][0]{
-  latestGallery,
-  latestCollection
+  latestGallery->{ "slug": slug.current },
+  latestCollection->{ "slug": slug.current }
 }
 `;
 
@@ -50,12 +50,12 @@ export default function WelcomeBox({
 
         const galleryHref = buildHref(
           "galleries",
-          data?.latestGallery,
+          data?.latestGallery?.slug,
           primary.href
         );
         const collectionHref = buildHref(
           "collections",
-          data?.latestCollection,
+          data?.latestCollection?.slug,
           secondary.href
         );
 
@@ -67,7 +67,6 @@ export default function WelcomeBox({
           collectionHref: secondary.href,
         });
         if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
           console.warn(
             "WelcomeBox: failed to fetch landing page latest links:",
             err
@@ -78,8 +77,6 @@ export default function WelcomeBox({
     return () => {
       mounted = false;
     };
-    // Only depend on the fallback hrefs so we can rebuild links if those props change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primary.href, secondary.href]);
 
   const posClasses = floating
