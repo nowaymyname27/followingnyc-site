@@ -48,6 +48,10 @@ export default function WelcomeBox({
         const data = await sanityClient.fetch(LANDING_QUERY);
         if (!mounted) return;
 
+        if (typeof window !== "undefined") {
+          console.log("WelcomeBox LANDING_QUERY result:", data);
+        }
+
         const galleryHref = buildHref(
           "galleries",
           data?.latestGallery?.slug,
