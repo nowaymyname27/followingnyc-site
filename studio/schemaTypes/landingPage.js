@@ -23,20 +23,28 @@ export default {
       options: { layout: "grid" },
     },
 
-    // Now reference real docs
     {
       name: "latestGallery",
       title: "Latest Gallery",
       type: "reference",
       to: [{ type: "gallery" }],
-      description: "Displayed in the latest gallery section.",
+      options: {
+        disableNew: true,
+        modal: "select", // use dropdown UI
+        display: "select", // ALWAYS show dropdown selector (no preview card)
+      },
     },
+
     {
       name: "latestCollection",
       title: "Latest Collection",
       type: "reference",
       to: [{ type: "collection" }],
-      description: "Displayed in the latest collection section.",
+      options: {
+        disableNew: true,
+        modal: "select",
+        display: "select",
+      },
     },
 
     {
