@@ -2,19 +2,11 @@
 import { createClient } from "next-sanity";
 import { projectId, dataset, apiVersion } from "../sanity/env";
 
-// Server-safe client for read-only published content
+// Client for reliably fetching published content everywhere (local + production)
 export const sanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // cached, fast, free
-  perspective: "published", // ensures draft content isn’t fetched
+  useCdn: false, // ensure fresh, uncached data for cross-dataset references
+  perspective: "published", // keep published-only behavior
 });
-
-// Optional helper if you ever need dynamic fetching (no caching)
-// export const sanityClientNoCache = createClient({
-//   projectId,
-//   dataset,
-//   apiVersion,
-//   useCdn: false,
-// });
