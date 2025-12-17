@@ -18,7 +18,7 @@ export default function NavBar({
 
   return (
     <div className="fixed inset-x-0 top-4 z-40 pointer-events-none">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 md:px-6 pointer-events-none">
+      <div className="mx-auto flex w-full items-center justify-between px-4 md:px-6 pointer-events-none">
         {/* Brand */}
         <a
           href="/"
