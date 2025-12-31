@@ -5,7 +5,6 @@ import * as React from "react";
 import styles from "../lightbox.module.css";
 import { useKeyNav } from "../hooks/useKeyNav";
 
-// Helper to format YYYY-MM-DD
 function formatPlainDate(dateStr) {
   if (!dateStr) return "";
   const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
@@ -17,7 +16,6 @@ function formatPlainDate(dateStr) {
   });
 }
 
-// Robust scroll lock: toggles both <html> and <body>
 function useScrollLock(locked) {
   React.useEffect(() => {
     const html = document.documentElement;
@@ -43,7 +41,7 @@ export default function LightboxOverlay({
   index,
   setIndex,
   onClose,
-  meta, // { title, year }
+  meta,
 }) {
   const dialogRef = React.useRef(null);
   const count = photos.length;
@@ -57,14 +55,12 @@ export default function LightboxOverlay({
     setIndex((n) => (n + 1) % count);
   }, [count, setIndex]);
 
-  // Focus + scroll lock
   React.useEffect(() => {
     if (!open) return;
     dialogRef.current?.focus();
   }, [open]);
   useScrollLock(open);
 
-  // Keyboard nav
   useKeyNav({
     onPrev: open ? goPrev : undefined,
     onNext: open ? goNext : undefined,
@@ -72,7 +68,6 @@ export default function LightboxOverlay({
     enabled: open,
   });
 
-  // Filename for downloads
   const fileName = React.useMemo(() => {
     if (!current) return "photo.jpg";
     const safeTitle = (meta?.title || "collection")
@@ -117,28 +112,37 @@ export default function LightboxOverlay({
       aria-label="Collection photo viewer"
       tabIndex={-1}
       className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm ${styles.backdrop}`}
-      onClick={onClose} // clicking the backdrop closes
+      onClick={onClose}
     >
-      <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-[1fr_360px]">
-        {/* Left: image area — clicking outside the image closes; clicking the image doesn't */}
-        <div className="relative flex items-center justify-center p-3 sm:p-6">
+      {/* 
+        CHANGED:
+        1. Adjusted grid columns. On 'md' (tablet landscape), sidebar is smaller (300px).
+           On 'lg' (desktop), it grows to 360px.
+        2. 'grid-cols-[1fr_...]' automatically handles the image width math for us.
+      */}
+      <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
+        {/* 
+          CHANGED:
+          1. Removed explicit calc() widths. 
+          2. Added 'h-full w-full' to container to force it to fill the grid cell.
+          3. Image now uses 'max-w-full max-h-full' to naturally fit the box.
+        */}
+        <div className="relative flex h-full w-full items-center justify-center p-2 sm:p-4 lg:p-8">
           <img
             src={current.url}
             alt={current.alt || "Photo"}
-            className={`max-h-[85vh] max-w-[92vw] md:max-w-[calc(100%-360px)] object-contain rounded-2xl shadow-2xl ${styles.imagePop}`}
+            className={`max-h-full max-w-full object-contain rounded-md sm:rounded-xl shadow-2xl ${styles.imagePop}`}
             draggable={false}
             onClick={(e) => e.stopPropagation()}
           />
         </div>
 
-        {/* Right: placard (desktop) */}
+        {/* Right: placard */}
         <aside
           className="hidden md:flex min-h-0 flex-col border-l border-white/10 bg-black/40 text-white"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Scrollable content */}
           <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-            {/* Collection meta + close */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-white/80">
                 {meta?.title}
@@ -156,12 +160,10 @@ export default function LightboxOverlay({
               </button>
             </div>
 
-            {/* Index */}
             <div className="text-xs text-white/60">
               {index + 1} / {count}
             </div>
 
-            {/* Actions */}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -173,15 +175,12 @@ export default function LightboxOverlay({
               </button>
             </div>
 
-            {/* ---------- NEW: Captured Date ---------- */}
             {current.capturedAt && (
               <div className="text-sm text-white/50">
                 Captured: {formatPlainDate(current.capturedAt)}
               </div>
             )}
-            {/* --------------------------------------- */}
 
-            {/* Photo title & description */}
             {(current.title || current.description) && (
               <div className="space-y-2">
                 {current.title && (
@@ -197,13 +196,11 @@ export default function LightboxOverlay({
               </div>
             )}
 
-            {/* Optional: Alt text */}
             {current.alt ? (
               <div className="text-xs text-white/60">Alt: {current.alt}</div>
             ) : null}
           </div>
 
-          {/* Desktop external controls pinned at bottom */}
           {count > 1 && (
             <div className="p-4 sm:p-6 mt-2 flex items-center justify-between">
               <button
@@ -227,7 +224,7 @@ export default function LightboxOverlay({
           )}
         </aside>
 
-        {/* Mobile bottom bar controls (unchanged) */}
+        {/* Mobile bottom bar */}
         {count > 1 && (
           <div
             className="md:hidden fixed inset-x-0 bottom-0 p-3 flex items-center justify-between bg-black/60 backdrop-blur border-t border-white/10 text-white"
