@@ -33,7 +33,6 @@ export default async function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NavBar menus={menus} />
         {children}
       </body>
     </html>
