@@ -114,30 +114,27 @@ export default function LightboxOverlay({
       className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm ${styles.backdrop}`}
       onClick={onClose}
     >
-      {/* 
-        CHANGED:
-        1. Adjusted grid columns. On 'md' (tablet landscape), sidebar is smaller (300px).
-           On 'lg' (desktop), it grows to 360px.
-        2. 'grid-cols-[1fr_...]' automatically handles the image width math for us.
-      */}
       <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
-        {/* 
-          CHANGED:
-          1. Removed explicit calc() widths. 
-          2. Added 'h-full w-full' to container to force it to fill the grid cell.
-          3. Image now uses 'max-w-full max-h-full' to naturally fit the box.
-        */}
+        {/* Left: Image Area */}
         <div className="relative flex h-full w-full items-center justify-center p-2 sm:p-4 lg:p-8">
           <img
             src={current.url}
             alt={current.alt || "Photo"}
-            className={`max-h-full max-w-full object-contain rounded-md sm:rounded-xl shadow-2xl ${styles.imagePop}`}
+            /* 
+               CHANGED:
+               1. Replaced 'max-h-full' with 'max-h-[85vh]'. 
+                  This forces the image to leave 15% vertical space (breathing room), 
+                  so it never touches the browser edges.
+               2. Added 'w-auto' to ensure aspect ratio is respected.
+               3. Added 'max-w-full' to ensure it fits horizontally within the grid cell.
+            */
+            className={`max-h-[85vh] w-auto max-w-full object-contain rounded-md sm:rounded-xl shadow-2xl ${styles.imagePop}`}
             draggable={false}
             onClick={(e) => e.stopPropagation()}
           />
         </div>
 
-        {/* Right: placard */}
+        {/* Right: Placard / Sidebar */}
         <aside
           className="hidden md:flex min-h-0 flex-col border-l border-white/10 bg-black/40 text-white"
           onClick={(e) => e.stopPropagation()}
