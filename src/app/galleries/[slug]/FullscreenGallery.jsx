@@ -4,6 +4,18 @@
 import * as React from "react";
 import Image from "next/image";
 
+// HELPER: Limits Sanity images to ~1440p (2560px width)
+// This dramatically speeds up loading for large uploads (e.g. 6000px raw photos)
+function getOptimizedUrl(url, width = 2560) {
+  if (!url) return "";
+  // Only apply to Sanity CDN URLs
+  if (!url.includes("cdn.sanity.io")) return url;
+
+  // If params exist, append with &, otherwise ?
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}w=${width}&fit=max&auto=format`;
+}
+
 export default function FullscreenGallery({
   photos = [],
   index = 0,
@@ -12,8 +24,17 @@ export default function FullscreenGallery({
   onNext,
 }) {
   const count = photos.length;
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+  }, [index]);
+
   if (!count) return null;
   const photo = photos[index];
+
+  // Optimize the source URL immediately
+  const optimizedSrc = getOptimizedUrl(photo.url);
 
   // Touch swipe (mobile)
   const touch = React.useRef({ x: 0, y: 0 });
@@ -43,21 +64,32 @@ export default function FullscreenGallery({
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_360px] gap-6 md:gap-8 md:items-center md:min-h-[calc(100vh-160px)]">
           {/* Artwork */}
           <div className="relative flex justify-center md:h-[calc(100vh-160px)] md:items-center">
+            {/* Spinner */}
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-200 border-t-neutral-800" />
+              </div>
+            )}
+
             <figure className="relative inline-flex md:max-h-[calc(100vh-160px)]">
-              {/* Tight wrapper so border/shadow hug image */}
               <div className="inline-block max-w-full max-h-[calc(100vh-160px)] rounded-xl border border-neutral-300 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] overflow-hidden">
                 <Image
-                  src={photo.url}
+                  key={optimizedSrc} // Update Key to match new URL
+                  src={optimizedSrc} // Use the optimized URL
                   alt={photo.alt || "Artwork"}
+                  // We still pass original dimensions for Aspect Ratio calculations,
+                  // but the actual file loaded is capped by getOptimizedUrl
                   width={photo.width || 1600}
                   height={photo.height || 1000}
                   sizes="(max-width: 768px) 100vw, (max-width: 1280px) 65vw, 900px"
                   placeholder={photo.lqip ? "blur" : "empty"}
                   blurDataURL={photo.lqip || undefined}
                   priority
-                  // ↓ Slightly lower quality for speed with minimal visual change
-                  quality={70}
-                  className="object-contain w-auto h-auto max-w-full max-h-[calc(100vh-160px)] align-middle"
+                  quality={75} // 75 is a sweet spot for web galleries
+                  onLoad={() => setIsLoading(false)}
+                  className={`object-contain w-auto h-auto max-w-full max-h-[calc(100vh-160px)] align-middle transition-opacity duration-300 ease-in-out ${
+                    isLoading ? "opacity-0" : "opacity-100"
+                  }`}
                 />
               </div>
 
@@ -69,7 +101,7 @@ export default function FullscreenGallery({
               )}
             </figure>
 
-            {/* ---- Prefetch neighbors (off-screen) ---- */}
+            {/* Prefetch neighbors */}
             <PreloadNeighbors photos={photos} index={index} />
           </div>
 
@@ -146,15 +178,11 @@ export default function FullscreenGallery({
   );
 }
 
-/** Preload the next/prev images through Next's optimizer.
- * Renders tiny, off-screen <Image> tags with loading="eager"
- * so their optimized variants are fetched & cached ahead of time.
- */
+/** Preload neighbors with the SAME optimization logic */
 function PreloadNeighbors({ photos, index }) {
   const count = photos.length;
   if (count <= 1) return null;
 
-  // how many ahead/behind to warm (tweak to 2 if you want deeper prefetch)
   const span = 1;
 
   const idxs = React.useMemo(() => {
@@ -163,7 +191,6 @@ function PreloadNeighbors({ photos, index }) {
       arr.push((index + d) % count);
       arr.push((index - d + count) % count);
     }
-    // make unique
     return Array.from(new Set(arr)).filter((i) => i !== index);
   }, [count, index]);
 
@@ -174,20 +201,21 @@ function PreloadNeighbors({ photos, index }) {
     >
       {idxs.map((i) => {
         const p = photos[i];
+        // Must match the main image optimization so browser cache works
+        const src = getOptimizedUrl(p.url);
         return (
           <Image
             key={p.id || i}
-            src={p.url}
+            src={src}
             alt=""
             width={p.width || 1600}
             height={p.height || 1000}
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 65vw, 900px"
-            // Force eager load even off-screen to warm the cache
             priority={false}
             loading="eager"
             decoding="async"
             fetchPriority="low"
-            quality={70}
+            quality={75}
             className="opacity-0"
           />
         );
