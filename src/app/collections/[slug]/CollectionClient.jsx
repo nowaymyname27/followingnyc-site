@@ -1,7 +1,7 @@
 // app/collections/[slug]/CollectionClient.jsx
 "use client";
 import React, { useMemo, useState, useCallback } from "react";
-import Link from "next/link";
+import BackButton from "@/components/BackButton"; // Import your new component
 import PhotoMasonry from "../components/PhotoMasonry";
 import LightboxOverlay from "../components/LightboxOverlay";
 
@@ -19,7 +19,6 @@ function formatPlainDate(dateStr) {
 export default function CollectionClient({ collection }) {
   const { title, year, date, items = [] } = collection || {};
 
-  // Already normalized in page.jsx; keep this to be safe
   const photos = useMemo(
     () =>
       (items || []).map((i, idx) => ({
@@ -28,7 +27,7 @@ export default function CollectionClient({ collection }) {
         alt: i.alt || "Photo",
         title: i.title ?? null,
         description: i.description ?? "",
-        capturedAt: i.capturedAt ?? null,
+        capturedAt: i.capturedAt ?? null, // <--- Data is here!
         tags: i.tags || [],
         lqip: i.lqip || null,
         width: i.width ?? null,
@@ -59,13 +58,8 @@ export default function CollectionClient({ collection }) {
       {/* Header */}
       <header className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-3">
-          <Link
-            href="/collections"
-            className="bg-white inline-flex items-center gap-2 rounded-full border border-black/20 px-3 py-1 text-sm text-black hover:bg-black/5"
-          >
-            <span aria-hidden>←</span>
-            <span>Back to Collections</span>
-          </Link>
+          {/* UPDATED: Uses the scroll-restoring BackButton */}
+          <BackButton>Back to Collections</BackButton>
         </div>
 
         <div className="flex items-end justify-between">

@@ -5,6 +5,18 @@ import * as React from "react";
 import styles from "../lightbox.module.css";
 import { useKeyNav } from "../hooks/useKeyNav";
 
+// Helper to format YYYY-MM-DD
+function formatPlainDate(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 // Robust scroll lock: toggles both <html> and <body>
 function useScrollLock(locked) {
   React.useEffect(() => {
@@ -119,7 +131,7 @@ export default function LightboxOverlay({
           />
         </div>
 
-        {/* Right: placard (desktop) — now includes TITLE + DESCRIPTION */}
+        {/* Right: placard (desktop) */}
         <aside
           className="hidden md:flex min-h-0 flex-col border-l border-white/10 bg-black/40 text-white"
           onClick={(e) => e.stopPropagation()}
@@ -161,7 +173,15 @@ export default function LightboxOverlay({
               </button>
             </div>
 
-            {/* NEW: Photo title & description */}
+            {/* ---------- NEW: Captured Date ---------- */}
+            {current.capturedAt && (
+              <div className="text-sm text-white/50">
+                Captured: {formatPlainDate(current.capturedAt)}
+              </div>
+            )}
+            {/* --------------------------------------- */}
+
+            {/* Photo title & description */}
             {(current.title || current.description) && (
               <div className="space-y-2">
                 {current.title && (
@@ -177,7 +197,7 @@ export default function LightboxOverlay({
               </div>
             )}
 
-            {/* Optional: Alt text (kept, but after description) */}
+            {/* Optional: Alt text */}
             {current.alt ? (
               <div className="text-xs text-white/60">Alt: {current.alt}</div>
             ) : null}
