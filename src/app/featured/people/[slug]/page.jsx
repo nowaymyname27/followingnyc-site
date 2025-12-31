@@ -3,6 +3,7 @@ import { createClient } from "next-sanity";
 import Image from "next/image";
 import Link from "next/link";
 import NavBarLight from "@/components/NavBarLight";
+import BackButton from "@/components/BackButton"; // Import your new component
 
 export const revalidate = 900;
 
@@ -65,13 +66,8 @@ export default async function PersonPage({ params }) {
         <div className="mx-auto max-w-6xl px-4 md:px-6 py-10 space-y-10">
           {/* Back to Featured button */}
           <div className="mb-3">
-            <Link
-              href="/featured"
-              className="bg-white inline-flex items-center gap-2 rounded-full border border-black/20 px-3 py-1 text-sm text-black hover:bg-black/5"
-            >
-              <span aria-hidden>←</span>
-              <span>Back to Featured</span>
-            </Link>
+            {/* Using the reusable component for scroll restoration */}
+            <BackButton>Back to Featured</BackButton>
           </div>
 
           {/* Header */}
