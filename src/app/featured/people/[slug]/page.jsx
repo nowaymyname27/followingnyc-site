@@ -3,7 +3,7 @@ import { createClient } from "next-sanity";
 import Image from "next/image";
 import Link from "next/link";
 import NavBarLight from "@/components/NavBarLight";
-import BackButton from "@/components/BackButton"; // Import your new component
+import BackButton from "@/components/BackButton";
 
 export const revalidate = 900;
 
@@ -66,7 +66,6 @@ export default async function PersonPage({ params }) {
         <div className="mx-auto max-w-6xl px-4 md:px-6 py-10 space-y-10">
           {/* Back to Featured button */}
           <div className="mb-3">
-            {/* Using the reusable component for scroll restoration */}
             <BackButton>Back to Featured</BackButton>
           </div>
 
@@ -91,28 +90,45 @@ export default async function PersonPage({ params }) {
             </div>
           </header>
 
-          {/* Photos grid */}
+          {/* Photos Masonry Grid */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Photos</h2>
-            <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+
+            {/* 
+               CHANGED: Switched from 'grid' to 'columns-*'. 
+               'gap-4' handles horizontal space between columns.
+               'space-y-4' is NOT used here because vertical spacing is handled per item.
+            */}
+            <div className="columns-2 md:columns-3 xl:columns-4 gap-4">
               {(photos ?? []).map((ph, idx) => {
                 const url = ph?.asset?.url;
                 const alt = ph?.alt || name;
+                // Extract dimensions from Sanity metadata
+                const { width, height } = ph?.asset?.metadata?.dimensions || {
+                  width: 800,
+                  height: 600,
+                };
+
                 return (
-                  <figure
+                  <div
                     key={url ?? idx}
-                    className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-surface"
+                    // CHANGED: 'break-inside-avoid' prevents an image from being cut in half across columns
+                    // 'mb-4' adds the vertical spacing between items in the column
+                    className="relative mb-4 break-inside-avoid overflow-hidden rounded-xl bg-surface group"
                   >
                     {url && (
                       <Image
                         src={url}
                         alt={alt}
-                        fill
-                        className="object-contain bg-surface transition-transform group-hover:scale-[1.02]"
-                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 16vw"
+                        // CHANGED: Removed 'fill'. We use intrinsic width/height
+                        // so the browser knows the exact aspect ratio.
+                        width={width}
+                        height={height}
+                        className="h-auto w-full object-cover transition-transform group-hover:scale-[1.02]"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
                       />
                     )}
-                  </figure>
+                  </div>
                 );
               })}
             </div>
