@@ -10,6 +10,7 @@ import link from "./link";
 import featured from "./featured";
 import testimonial from "./testimonial";
 import person from "./person";
+import aiCollection from "./aiCollection";
 
 export const schemaTypes = [
   tag,
@@ -24,4 +25,5 @@ export const schemaTypes = [
   featured,
   testimonial,
   person,
+  aiCollection,
 ];
