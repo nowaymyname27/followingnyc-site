@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import NavBarLight from "@/components/NavBarLight";
 import BackButton from "@/components/BackButton";
+import PersonGalleryClient from "./PersonGalleryClient"; // Import the new component
 
 export const revalidate = 900;
 
@@ -14,19 +15,23 @@ const client = createClient({
   useCdn: true,
 });
 
+// QUERY: Note that we are fetching 'alt' inside the photos array
 const PERSON_QUERY = /* groq */ `
 *[_type=="person" && slug.current==$slug][0]{
   _id,
   name,
   bio,
   "slug": slug.current,
-  cover{asset->{"url": url}, alt},
+  cover{
+    asset->{"url": url}, 
+    alt
+  },
   "photos": photos[]{
     asset->{
       "url": url,
       metadata{dimensions}
     },
-    alt
+    alt 
   }
 }
 `;
@@ -90,49 +95,12 @@ export default async function PersonPage({ params }) {
             </div>
           </header>
 
-          {/* Photos Masonry Grid */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold">Photos</h2>
-
-            {/* 
-               CHANGED: Switched from 'grid' to 'columns-*'. 
-               'gap-4' handles horizontal space between columns.
-               'space-y-4' is NOT used here because vertical spacing is handled per item.
-            */}
-            <div className="columns-2 md:columns-3 xl:columns-4 gap-4">
-              {(photos ?? []).map((ph, idx) => {
-                const url = ph?.asset?.url;
-                const alt = ph?.alt || name;
-                // Extract dimensions from Sanity metadata
-                const { width, height } = ph?.asset?.metadata?.dimensions || {
-                  width: 800,
-                  height: 600,
-                };
-
-                return (
-                  <div
-                    key={url ?? idx}
-                    // CHANGED: 'break-inside-avoid' prevents an image from being cut in half across columns
-                    // 'mb-4' adds the vertical spacing between items in the column
-                    className="relative mb-4 break-inside-avoid overflow-hidden rounded-xl bg-surface group"
-                  >
-                    {url && (
-                      <Image
-                        src={url}
-                        alt={alt}
-                        // CHANGED: Removed 'fill'. We use intrinsic width/height
-                        // so the browser knows the exact aspect ratio.
-                        width={width}
-                        height={height}
-                        className="h-auto w-full object-cover transition-transform group-hover:scale-[1.02]"
-                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          {/* 
+             Photos Section 
+             We moved the grid rendering into this Client Component 
+             so we can handle state (lightbox open/close).
+          */}
+          <PersonGalleryClient photos={photos} name={name} />
         </div>
       </main>
     </>
