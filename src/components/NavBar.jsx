@@ -13,7 +13,9 @@ export default function NavBar({
   const links = [
     { label: "Galleries", href: "/galleries" },
     { label: "Collections", href: "/collections" },
-    ...NAV_BUTTONS,
+    { label: "Featured", href: "/featured" },
+    { label: "AI", href: "/ai" },
+    { label: "Contact Me", href: "/contact" },
   ];
 
   return (

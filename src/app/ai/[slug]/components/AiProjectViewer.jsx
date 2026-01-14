@@ -1,158 +1,241 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
+// Import your existing lightbox
+import LightboxOverlay from "@/app/collections/components/LightboxOverlay";
 
-function getOptimizedUrl(url) {
+// Helper for Sanity Image resizing
+function getOptimizedUrl(url, width = 1600) {
   if (!url?.includes("cdn.sanity.io")) return url;
-  return `${url}?w=2000&fit=max&auto=format`;
+  return `${url}?w=${width}&auto=format`;
 }
 
 export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
-  const [mode, setMode] = useState("ai"); // 'ai' or 'original'
   const router = useRouter();
+  const { title, description, originals = [], generated = [] } = project;
 
-  const activeImages = mode === "ai" ? project.generated : project.originals;
+  // --- LIGHTBOX STATE ---
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
 
-  // Keyboard Navigation for Next/Prev Project
+  // 1. Unify all images into one array for the lightbox
+  const galleryPhotos = useMemo(() => {
+    // Format Originals
+    const origs = originals.map((img) => ({
+      url: img?.asset?.url,
+      alt: "Original Source", // Or img.alt if exists
+      // Pass extra data if your Lightbox supports it, or generic title
+      title: "Original Source",
+    }));
+
+    // Format AI Images
+    const gens = generated.map((img) => ({
+      url: img?.asset?.url,
+      alt: "AI Generated",
+      title: "AI Interpretation",
+    }));
+
+    return [...origs, ...gens];
+  }, [originals, generated]);
+
+  // 2. Click Handlers
+  const handleOriginalClick = (localIndex) => {
+    setIndex(localIndex); // Originals start at 0
+    setOpen(true);
+  };
+
+  const handleAiClick = (localIndex) => {
+    // AI images start AFTER the originals
+    setIndex(originals.length + localIndex);
+    setOpen(true);
+  };
+
+  // Keyboard Navigation for Project (Next/Prev Page)
   useEffect(() => {
     const handleKey = (e) => {
+      // Only navigate projects if Lightbox is CLOSED
+      if (open) return;
+
       if (e.key === "ArrowRight" && nextSlug) router.push(`/ai/${nextSlug}`);
       if (e.key === "ArrowLeft" && prevSlug) router.push(`/ai/${prevSlug}`);
       if (e.key === "Escape") router.push("/ai");
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [nextSlug, prevSlug, router]);
+  }, [nextSlug, prevSlug, router, open]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Top Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
-        <BackButton>Back to Grid</BackButton>
+    <>
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {/* TOP HEADER */}
+        <div className="mb-12 space-y-6">
+          <div className="flex items-center justify-between">
+            <BackButton>Back to Grid</BackButton>
 
-        {/* TOGGLE */}
-        <div className="flex items-center bg-gray-100 rounded-full p-1 border border-black/5">
-          <button
-            onClick={() => setMode("original")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              mode === "original"
-                ? "bg-white shadow text-black"
-                : "text-gray-500 hover:text-black"
-            }`}
-          >
-            Originals
-          </button>
-          <button
-            onClick={() => setMode("ai")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              mode === "ai"
-                ? "bg-purple-600 shadow text-white"
-                : "text-gray-500 hover:text-black"
-            }`}
-          >
-            AI Generated
-          </button>
+            <div className="hidden md:flex gap-4 text-sm font-medium">
+              {prevSlug && (
+                <Link
+                  href={`/ai/${prevSlug}`}
+                  className="text-gray-500 hover:text-black transition-colors"
+                >
+                  ← Previous
+                </Link>
+              )}
+              {nextSlug && (
+                <Link
+                  href={`/ai/${nextSlug}`}
+                  className="text-gray-500 hover:text-black transition-colors"
+                >
+                  Next →
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="max-w-2xl">
+            <h1 className="text-4xl font-bold tracking-tight mb-4">{title}</h1>
+            {description && (
+              <p className="text-lg text-gray-600 leading-relaxed">
+                {description}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Placeholder for spacing alignment */}
-        <div className="hidden md:block w-32" />
-      </div>
+        <div className="space-y-16">
+          {/* ORIGINALS SECTION */}
+          <ImageSection
+            title="Original Source"
+            images={originals}
+            badgeText="Real Photograph"
+            badgeClasses="bg-white/90 text-black"
+            onImageClick={handleOriginalClick} // Pass handler
+          />
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8 items-start">
-        {/* IMAGE VIEWER */}
-        <div className="relative group bg-gray-50 rounded-2xl overflow-hidden border border-black/5 aspect-[4/3] flex items-center justify-center">
-          {activeImages && activeImages.length > 0 ? (
-            <Image
-              key={activeImages[0].asset.url + mode}
-              src={getOptimizedUrl(activeImages[0].asset.url)}
-              alt={project.title}
-              width={2000}
-              height={1500}
-              className="w-full h-full object-contain drop-shadow-xl"
-              priority
-            />
-          ) : (
-            <div className="text-gray-400 italic">No image available</div>
-          )}
+          {/* Visual Connector */}
+          <div className="flex items-center gap-4 justify-center opacity-20">
+            <div className="h-12 w-px bg-black" />
+            <span className="text-2xl">↓</span>
+            <div className="h-12 w-px bg-black" />
+          </div>
 
-          {/* HOVER ARROWS (Using Links now) */}
-          {prevSlug && (
-            <Link
-              href={`/ai/${prevSlug}`}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 text-black"
-              title="Previous Project"
-            >
-              ←
+          {/* AI GENERATED SECTION */}
+          <ImageSection
+            title="AI Interpretation"
+            images={generated}
+            badgeText="AI Generated"
+            badgeClasses="bg-purple-600/90 text-white"
+            onImageClick={handleAiClick} // Pass handler
+          />
+        </div>
+
+        {/* BOTTOM NAV */}
+        <div className="mt-20 pt-10 border-t border-gray-200 flex items-center justify-between">
+          {prevSlug ? (
+            <Link href={`/ai/${prevSlug}`} className="group flex flex-col">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
+                Previous
+              </span>
+              <span className="text-lg font-medium group-hover:underline">
+                ← Go Back
+              </span>
             </Link>
+          ) : (
+            <div />
           )}
-          {nextSlug && (
+
+          {nextSlug ? (
             <Link
               href={`/ai/${nextSlug}`}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 text-black"
-              title="Next Project"
+              className="group flex flex-col items-end"
             >
-              →
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
+                Next Project
+              </span>
+              <span className="text-lg font-medium group-hover:underline">
+                View Next →
+              </span>
             </Link>
+          ) : (
+            <div />
           )}
         </div>
-
-        {/* SIDEBAR INFO */}
-        <div className="space-y-6 lg:mt-10">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">
-              {project.title}
-            </h1>
-            <div className="h-1 w-20 bg-black/10 rounded-full" />
-          </div>
-
-          <div className="prose prose-sm text-gray-600">
-            {project.description ? (
-              <p>{project.description}</p>
-            ) : (
-              <p className="italic opacity-50">No description provided.</p>
-            )}
-          </div>
-
-          <div className="pt-6 border-t border-black/10">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-              Viewing
-            </span>
-            <p className="text-lg font-medium">
-              {mode === "ai" ? "✨ AI Generated" : "📷 Original Source"}
-            </p>
-          </div>
-
-          {/* Mobile Bottom Nav */}
-          <div className="flex items-center justify-between lg:hidden pt-4 border-t border-black/5">
-            {prevSlug ? (
-              <Link
-                href={`/ai/${prevSlug}`}
-                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
-              >
-                ← Previous
-              </Link>
-            ) : (
-              <div />
-            )}
-
-            {nextSlug ? (
-              <Link
-                href={`/ai/${nextSlug}`}
-                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
-              >
-                Next →
-              </Link>
-            ) : (
-              <div />
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+
+      {/* --- LIGHTBOX COMPONENT --- */}
+      <LightboxOverlay
+        open={open}
+        photos={galleryPhotos}
+        index={index}
+        setIndex={setIndex}
+        onClose={() => setOpen(false)}
+        meta={{ title: title }}
+      />
+    </>
+  );
+}
+
+// --- REUSABLE SECTION COMPONENT ---
+function ImageSection({
+  title,
+  images,
+  badgeText,
+  badgeClasses,
+  onImageClick,
+}) {
+  if (!images || images.length === 0) return null;
+
+  return (
+    <section>
+      <div className="flex items-center gap-3 mb-6">
+        <span
+          className={`h-2 w-2 rounded-full ${badgeClasses.includes("bg-white") ? "bg-black" : badgeClasses.split(" ")[0]}`}
+        />
+        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
+          {title}
+        </h2>
+      </div>
+
+      <div
+        className={`grid gap-6 ${
+          images.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+        }`}
+      >
+        {images.map((img, idx) => (
+          <div
+            key={idx}
+            // Added onClick and cursor-pointer
+            onClick={() => onImageClick(idx)}
+            className="relative group bg-gray-50 rounded-2xl overflow-hidden border border-black/5 cursor-zoom-in active:scale-[0.99] transition-transform"
+          >
+            {img?.asset?.url && (
+              <>
+                <Image
+                  src={getOptimizedUrl(img.asset.url)}
+                  alt={`${title} ${idx + 1}`}
+                  width={1600}
+                  height={1200}
+                  className="w-full h-auto object-contain"
+                  style={{ width: "100%", height: "auto" }}
+                />
+
+                {/* Badge */}
+                <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                  <span
+                    className={`${badgeClasses} text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-md shadow-sm`}
+                  >
+                    {badgeText}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
