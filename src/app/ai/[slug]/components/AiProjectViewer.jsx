@@ -1,3 +1,4 @@
+// app/ai/[slug]/AiProjectViewer.jsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -5,10 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
-// Import your existing lightbox
 import LightboxOverlay from "@/app/collections/components/LightboxOverlay";
 
-// Helper for Sanity Image resizing
 function getOptimizedUrl(url, width = 1600) {
   if (!url?.includes("cdn.sanity.io")) return url;
   return `${url}?w=${width}&auto=format`;
@@ -18,21 +17,16 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
   const router = useRouter();
   const { title, description, originals = [], generated = [] } = project;
 
-  // --- LIGHTBOX STATE ---
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  // 1. Unify all images into one array for the lightbox
   const galleryPhotos = useMemo(() => {
-    // Format Originals
     const origs = originals.map((img) => ({
       url: img?.asset?.url,
-      alt: "Original Source", // Or img.alt if exists
-      // Pass extra data if your Lightbox supports it, or generic title
+      alt: "Original Source",
       title: "Original Source",
     }));
 
-    // Format AI Images
     const gens = generated.map((img) => ({
       url: img?.asset?.url,
       alt: "AI Generated",
@@ -42,24 +36,19 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
     return [...origs, ...gens];
   }, [originals, generated]);
 
-  // 2. Click Handlers
   const handleOriginalClick = (localIndex) => {
-    setIndex(localIndex); // Originals start at 0
+    setIndex(localIndex);
     setOpen(true);
   };
 
   const handleAiClick = (localIndex) => {
-    // AI images start AFTER the originals
     setIndex(originals.length + localIndex);
     setOpen(true);
   };
 
-  // Keyboard Navigation for Project (Next/Prev Page)
   useEffect(() => {
     const handleKey = (e) => {
-      // Only navigate projects if Lightbox is CLOSED
       if (open) return;
-
       if (e.key === "ArrowRight" && nextSlug) router.push(`/ai/${nextSlug}`);
       if (e.key === "ArrowLeft" && prevSlug) router.push(`/ai/${prevSlug}`);
       if (e.key === "Escape") router.push("/ai");
@@ -71,8 +60,8 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
   return (
     <>
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* TOP HEADER */}
-        <div className="mb-12 space-y-6">
+        {/* HEADER */}
+        <div className="max-w-5xl mx-auto mb-12 space-y-6">
           <div className="flex items-center justify-between">
             <BackButton>Back to Grid</BackButton>
 
@@ -106,35 +95,33 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
           </div>
         </div>
 
+        {/* CONTENT */}
         <div className="space-y-16">
-          {/* ORIGINALS SECTION */}
           <ImageSection
             title="Original Source"
             images={originals}
             badgeText="Real Photograph"
             badgeClasses="bg-white/90 text-black"
-            onImageClick={handleOriginalClick} // Pass handler
+            onImageClick={handleOriginalClick}
           />
 
-          {/* Visual Connector */}
           <div className="flex items-center gap-4 justify-center opacity-20">
             <div className="h-12 w-px bg-black" />
             <span className="text-2xl">↓</span>
             <div className="h-12 w-px bg-black" />
           </div>
 
-          {/* AI GENERATED SECTION */}
           <ImageSection
             title="AI Interpretation"
             images={generated}
             badgeText="AI Generated"
             badgeClasses="bg-purple-600/90 text-white"
-            onImageClick={handleAiClick} // Pass handler
+            onImageClick={handleAiClick}
           />
         </div>
 
-        {/* BOTTOM NAV */}
-        <div className="mt-20 pt-10 border-t border-gray-200 flex items-center justify-between">
+        {/* FOOTER */}
+        <div className="max-w-5xl mx-auto mt-20 pt-10 border-t border-gray-200 flex items-center justify-between">
           {prevSlug ? (
             <Link href={`/ai/${prevSlug}`} className="group flex flex-col">
               <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
@@ -166,7 +153,6 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
         </div>
       </div>
 
-      {/* --- LIGHTBOX COMPONENT --- */}
       <LightboxOverlay
         open={open}
         photos={galleryPhotos}
@@ -179,7 +165,7 @@ export default function AiProjectViewer({ project, nextSlug, prevSlug }) {
   );
 }
 
-// --- REUSABLE SECTION COMPONENT ---
+// --- MASONRY IMAGE SECTION ---
 function ImageSection({
   title,
   images,
@@ -191,7 +177,7 @@ function ImageSection({
 
   return (
     <section>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-5xl mx-auto flex items-center gap-3 mb-6">
         <span
           className={`h-2 w-2 rounded-full ${badgeClasses.includes("bg-white") ? "bg-black" : badgeClasses.split(" ")[0]}`}
         />
@@ -200,42 +186,75 @@ function ImageSection({
         </h2>
       </div>
 
-      <div
-        className={`grid gap-6 ${
-          images.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-        }`}
-      >
-        {images.map((img, idx) => (
+      {/* --- CASE 1: SINGLE IMAGE --- 
+          We center it and limit the height so it doesn't get huge.
+      */}
+      {images.length === 1 && (
+        <div className="flex justify-center">
           <div
-            key={idx}
-            // Added onClick and cursor-pointer
-            onClick={() => onImageClick(idx)}
-            className="relative group bg-gray-50 rounded-2xl overflow-hidden border border-black/5 cursor-zoom-in active:scale-[0.99] transition-transform"
+            onClick={() => onImageClick(0)}
+            className="relative inline-block cursor-zoom-in group overflow-hidden rounded-2xl border border-black/5"
           >
-            {img?.asset?.url && (
+            {images[0]?.asset?.url && (
               <>
                 <Image
-                  src={getOptimizedUrl(img.asset.url)}
-                  alt={`${title} ${idx + 1}`}
+                  src={getOptimizedUrl(images[0].asset.url)}
+                  alt={`${title} 1`}
                   width={1600}
                   height={1200}
-                  className="w-full h-auto object-contain"
-                  style={{ width: "100%", height: "auto" }}
+                  className="w-auto h-auto object-contain transition-transform active:scale-[0.99]"
+                  // This constraint stops the "humongous" single image issue
+                  style={{ maxWidth: "100%", maxHeight: "80vh" }}
                 />
-
-                {/* Badge */}
-                <div className="absolute top-3 right-3 z-10 pointer-events-none">
-                  <span
-                    className={`${badgeClasses} text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-md shadow-sm`}
-                  >
-                    {badgeText}
-                  </span>
-                </div>
+                <Badge text={badgeText} classes={badgeClasses} />
               </>
             )}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* --- CASE 2: MULTIPLE IMAGES (MASONRY) --- 
+          We use CSS columns to pack them tightly without margins.
+      */}
+      {images.length > 1 && (
+        <div className="mx-auto max-w-[1800px] columns-1 md:columns-2 gap-6 space-y-6">
+          {images.map((img, idx) => (
+            <div
+              key={idx}
+              onClick={() => onImageClick(idx)}
+              // 'break-inside-avoid' keeps the image whole
+              className="relative break-inside-avoid cursor-zoom-in group overflow-hidden rounded-2xl border border-black/5 active:scale-[0.99] transition-transform"
+            >
+              {img?.asset?.url && (
+                <>
+                  <Image
+                    src={getOptimizedUrl(img.asset.url)}
+                    alt={`${title} ${idx + 1}`}
+                    width={1600}
+                    height={1200}
+                    // w-full makes it fill the column width perfectly
+                    className="w-full h-auto object-cover"
+                  />
+                  <Badge text={badgeText} classes={badgeClasses} />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
+  );
+}
+
+// Helper for the badge to keep code clean
+function Badge({ text, classes }) {
+  return (
+    <div className="absolute top-4 right-4 z-10 pointer-events-none">
+      <span
+        className={`${classes} text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-md shadow-sm`}
+      >
+        {text}
+      </span>
+    </div>
   );
 }
