@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.sanity/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment variables (Safety first)
+.env
+.env.local
+.env.*.local
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Sanity Schema Extraction (Optional)
+# If you want to keep the snapshot in Git, remove the line below. 
+# Usually, it's safer to keep it versioned, so I've left it commented out.
+# schema.json
