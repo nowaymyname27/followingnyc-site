@@ -11,7 +11,6 @@ import featured from "./featured";
 import testimonial from "./testimonial";
 import person from "./person";
 import aiCollection from "./aiCollection";
-import { videoContent } from "./videoContent";
 
 export const schemaTypes = [
   tag,
@@ -27,5 +26,4 @@ export const schemaTypes = [
   testimonial,
   person,
   aiCollection,
-  videoContent,
 ];
