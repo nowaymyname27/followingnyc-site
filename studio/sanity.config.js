@@ -1,6 +1,7 @@
 import { defineConfig } from "sanity";
 import { visionTool } from "@sanity/vision";
 import { structureTool } from "sanity/structure";
+import { muxInput } from "sanity-plugin-mux-input";
 
 // local imports inside /studio
 import { schemaTypes } from "./schemaTypes"; // from studio/schemaTypes/index.(js|ts)
@@ -15,5 +16,6 @@ export default defineConfig({
   plugins: [
     structureTool({ structure }),
     visionTool(), // api version is optional unless you need a specific one
+    muxInput(),
   ],
 });
