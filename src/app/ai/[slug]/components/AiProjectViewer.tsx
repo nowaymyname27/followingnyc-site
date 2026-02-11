@@ -116,7 +116,7 @@ export default function AiProjectViewer({
         </div>
 
         {/* ORIGINALS SECTION (Always visible) */}
-        <div className="mb-20 border-b border-gray-100 pb-16">
+        <div className="mb-20 mx-auto max-w-5xl border-b border-gray-100 pb-16">
           <ImageSection
             title="Original Source"
             images={originals}
