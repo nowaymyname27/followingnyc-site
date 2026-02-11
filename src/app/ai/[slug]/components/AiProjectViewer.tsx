@@ -25,7 +25,7 @@ interface ProjectData {
     asset: {
       playbackId: string;
     };
-  }> | null; // Allow null here for safety
+  }> | null;
 }
 
 function getOptimizedUrl(url: string, width = 1600) {
@@ -44,7 +44,6 @@ export default function AiProjectViewer({
 }) {
   const router = useRouter();
 
-  // 1. Safe destructuring with default empty arrays
   const {
     title,
     description,
@@ -53,8 +52,6 @@ export default function AiProjectViewer({
     aiVideos = [],
   } = project;
 
-  // 2. Boolean check: Do we actually have videos?
-  // We check for Array.isArray in case Sanity passes 'null' despite the default above
   const hasVideos = Array.isArray(aiVideos) && aiVideos.length > 0;
 
   const [activeTab, setActiveTab] = useState<"images" | "videos">("images");
@@ -115,8 +112,8 @@ export default function AiProjectViewer({
           </div>
         </div>
 
-        {/* ORIGINALS SECTION (Always visible) */}
-        <div className="mb-20 mx-auto max-w-5xl border-b border-gray-100 pb-16">
+        {/* ORIGINALS SECTION */}
+        <div className="mb-20 border-b border-gray-100 pb-16">
           <ImageSection
             title="Original Source"
             images={originals}
@@ -128,9 +125,8 @@ export default function AiProjectViewer({
 
         {/* LOGIC: Show Tabs IF videos exist, OTHERWISE just show images */}
         {hasVideos ? (
-          /* --- TABS LAYOUT --- */
-          <div className="max-w-5xl mx-auto">
-            <div className="flex justify-center gap-8 mb-12 border-b border-gray-100">
+          <div>
+            <div className="flex justify-center gap-8 mb-12 border-b border-gray-100 max-w-5xl mx-auto">
               <button
                 onClick={() => setActiveTab("images")}
                 className={`pb-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${
@@ -169,7 +165,6 @@ export default function AiProjectViewer({
             </div>
           </div>
         ) : (
-          /* --- NO VIDEOS LAYOUT (Just Images) --- */
           <div className="mt-16 pt-8">
             <ImageSection
               title="AI Interpretation"
@@ -197,11 +192,17 @@ export default function AiProjectViewer({
 // --- SUB COMPONENTS ---
 
 function VideoSection({ videos }: { videos: ProjectData["aiVideos"] }) {
-  // Safety check: if null or empty, return nothing
   if (!videos || videos.length === 0) return null;
 
+  // Logic: If 2 or 4 videos, use a symmetrical 2-column layout to prevent dangling items or empty columns.
+  const isBalancedEven = videos.length === 2 || videos.length === 4;
+  
+  const containerClass = isBalancedEven
+    ? "max-w-5xl grid-cols-1 md:grid-cols-2" // 2 or 4 items -> 2 columns (Balanced)
+    : "max-w-7xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"; // 3, 5+ items -> Standard 3 columns
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[1800px] mx-auto">
+    <div className={`grid gap-8 mx-auto ${containerClass}`}>
       {videos.map((v) => (
         <div
           key={v._key}
@@ -211,7 +212,12 @@ function VideoSection({ videos }: { videos: ProjectData["aiVideos"] }) {
             playbackId={v.asset?.playbackId}
             streamType="on-demand"
             primaryColor="#FFFFFF"
-            className="w-full aspect-video"
+            className="w-full"
+            style={{
+              aspectRatio: "9 / 16",
+              width: "100%",
+              height: "auto",
+            }}
           />
         </div>
       ))}
@@ -227,45 +233,83 @@ function ImageSection({
   onImageClick,
   hideTitle = false,
 }: any) {
-  // Safety check
   if (!images || images.length === 0) return null;
+
+  // 1. Single Image Logic
+  if (images.length === 1) {
+    return (
+      <section>
+        {!hideTitle && <SectionHeader title={title} />}
+        <div className="flex justify-center">
+          <div
+            onClick={() => onImageClick(0)}
+            className="relative cursor-zoom-in group overflow-hidden rounded-2xl border border-black/5 inline-block"
+          >
+            <Image
+              src={getOptimizedUrl(images[0].asset.url)}
+              alt={title}
+              width={1600}
+              height={1200}
+              className="w-auto h-auto max-h-[80vh] max-w-full object-contain"
+            />
+            <Badge text={badgeText} classes={badgeClasses} />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // 2. Dynamic Grid Logic
+  // - If 2 images: 2-col grid (2 side by side)
+  // - If 4 images: 2-col grid (2x2 square) - This fixes the "off center" look of 3 columns
+  // - Else (3, 5, 6...): 3-col grid
+  const isBalancedEven = images.length === 2 || images.length === 4;
+
+  const containerClasses = isBalancedEven
+    ? "max-w-5xl grid-cols-1 md:grid-cols-2" // Forces symmetry for 2 and 4
+    : "max-w-7xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3"; // Standard grid
 
   return (
     <section>
-      {!hideTitle && (
-        <div className="max-w-5xl mx-auto mb-8 flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-black" />
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">
-            {title}
-          </h2>
-        </div>
-      )}
-      <div
-        className={`mx-auto ${images.length === 1 ? "max-w-4xl" : "max-w-[1800px] columns-1 md:columns-2 gap-6 space-y-6"}`}
-      >
+      {!hideTitle && <SectionHeader title={title} />}
+      {/* Changed from 'columns-' (masonry) to 'grid' to ensure consistent row filling */}
+      <div className={`grid gap-6 mx-auto ${containerClasses}`}>
         {images.map((img: any, idx: number) => (
           <div
             key={idx}
             onClick={() => onImageClick(idx)}
-            className="relative break-inside-avoid cursor-zoom-in group overflow-hidden rounded-2xl border border-black/5"
+            className="relative cursor-zoom-in group overflow-hidden rounded-2xl border border-black/5"
           >
             <Image
               src={getOptimizedUrl(img.asset.url)}
               alt={title}
               width={1600}
               height={1200}
-              className="w-full h-auto object-cover"
+              className="w-full h-auto object-cover aspect-[3/4]" // Added aspect-ratio to keep grid cells even
             />
-            <div className="absolute top-4 right-4 z-10">
-              <span
-                className={`${badgeClasses} text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-md`}
-              >
-                {badgeText}
-              </span>
-            </div>
+            <Badge text={badgeText} classes={badgeClasses} />
           </div>
         ))}
       </div>
     </section>
   );
 }
+
+const SectionHeader = ({ title }: { title: string }) => (
+  <div className="max-w-5xl mx-auto mb-8 flex items-center gap-2">
+    <span className="h-1.5 w-1.5 rounded-full bg-black" />
+    <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+      {title}
+    </h2>
+  </div>
+);
+
+const Badge = ({ text, classes }: { text: string; classes: string }) => (
+  <div className="absolute top-4 right-4 z-10">
+    <span
+      className={`${classes} text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-md shadow-sm`}
+    >
+      {text}
+    </span>
+  </div>
+);
