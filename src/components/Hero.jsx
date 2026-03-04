@@ -5,9 +5,9 @@ import { getMediaByMode } from "../lib/heroData";
 import "./styles/hero.css"; // shared CSS with vars
 
 export default function Hero({
-  interval = 5000,
+  beatMs = 10000,
+  modeHoldCount = 2,
   mode = "auto",
-  layoutRangeMs = [9000, 16000], // can also be a number
   colors = [
     "#0f77a7ff",
     "#2426a2ff",
@@ -29,6 +29,10 @@ export default function Hero({
   },
 }) {
   const registryKeys = useMemo(() => Object.keys(MODES), []);
+  const orderedModes = useMemo(
+    () => ["fullscreen", "sideImage", "tripleColumn"],
+    []
+  );
 
   // Force fullscreen below LG (Tailwind lg = 1024px): mobile + tablet => fullscreen only
   const [isLgUp, setIsLgUp] = useState(false);
@@ -48,6 +52,11 @@ export default function Hero({
     return isLgUp ? base : ["fullscreen"];
   }, [registryKeys, enabledModes, isLgUp]);
 
+  const sequenceModeKeys = useMemo(
+    () => orderedModes.filter((k) => modeKeys.includes(k)),
+    [orderedModes, modeKeys]
+  );
+
   // Media per mode
   const mediaByMode = useMemo(() => {
     const out = {};
@@ -56,18 +65,17 @@ export default function Hero({
   }, [modeKeys]);
 
   // State
-  const [indices, setIndices] = useState(() =>
-    Object.fromEntries(
+  const [heroState, setHeroState] = useState(() => ({
+    indices: Object.fromEntries(
       (modeKeys.length ? modeKeys : ["fullscreen"]).map((k) => [k, 0])
-    )
-  );
-  const [layout, setLayout] = useState(modeKeys[0] || "fullscreen");
-  const [bgColor, setBgColor] = useState("#000000");
+    ),
+    layout: modeKeys[0] || "fullscreen",
+    bgColor: "#000000",
+    hold: 1,
+  }));
 
   const autoMode = mode === "auto" || mode === "random";
   const rand = (n) => Math.floor(Math.random() * n);
-  const randRange = (min, max) =>
-    Math.floor(Math.random() * (max - min + 1)) + min;
 
   const hexToRgb = (hex) => {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -92,94 +100,126 @@ export default function Hero({
     );
   };
 
-  // Helper: fixed delay (number) OR random window ([min,max])
-  const getLayoutDelay = () => {
-    if (typeof layoutRangeMs === "number") return layoutRangeMs;
-    const [min, max] = Array.isArray(layoutRangeMs)
-      ? layoutRangeMs
-      : [9000, 16000];
-    return randRange(min, max);
-  };
-
   // Initial randomization on mount
   useEffect(() => {
-    setIndices((prev) => {
-      const next = { ...prev };
+    setHeroState((prev) => {
+      const nextIndices = { ...prev.indices };
       modeKeys.forEach((k) => {
         const slides = mediaOverride[k] || mediaByMode[k] || [];
         const len = slides.length || 1;
-        next[k] = rand(len);
+        nextIndices[k] = rand(len);
       });
-      return next;
-    });
 
-    if (modeKeys.length) {
-      if (mode === "auto" || mode === "random") {
-        setLayout(modeKeys[rand(modeKeys.length)]);
-      } else if (modeKeys.includes(mode)) {
-        setLayout(mode);
-      } else {
-        setLayout(modeKeys[0]);
+      let nextLayout = prev.layout;
+      if (sequenceModeKeys.length) {
+        if (mode === "auto" || mode === "random") {
+          nextLayout = sequenceModeKeys[0];
+        } else if (modeKeys.includes(mode)) {
+          nextLayout = mode;
+        } else {
+          nextLayout = sequenceModeKeys[0];
+        }
       }
-    }
-    setBgColor(colors[rand(colors.length)]);
+
+      return {
+        indices: nextIndices,
+        layout: nextLayout,
+        bgColor: colors[rand(colors.length)],
+        hold: 1,
+      };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // once
 
   // 🔧 Normalize when the available mode set changes (e.g., crossing lg breakpoint)
   useEffect(() => {
-    // Rebuild indices for current set
-    setIndices((prev) => {
+    setHeroState((prev) => {
       const next = {};
       modeKeys.forEach((k) => {
         const slides = mediaOverride[k] || mediaByMode[k] || [];
         const len = slides.length || 1;
-        next[k] = prev[k] != null ? prev[k] % len : 0;
+        next[k] = prev.indices[k] != null ? prev.indices[k] % len : 0;
       });
-      return next;
-    });
 
-    // Ensure the current layout is valid; if not, switch to first available
-    if (!modeKeys.includes(layout)) {
-      setLayout(modeKeys[0] || "fullscreen");
-    }
+      const nextLayout = sequenceModeKeys.includes(prev.layout)
+        ? prev.layout
+        : sequenceModeKeys[0] || "fullscreen";
+
+      return {
+        ...prev,
+        indices: next,
+        layout: nextLayout,
+        hold: 1,
+      };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modeKeys]);
+  }, [modeKeys, sequenceModeKeys]);
 
-  // Advance slides per-mode
+  // Unified beat: image advance + optional layout rotation
   useEffect(() => {
-    const timers = [];
-    modeKeys.forEach((k) => {
-      const slides = mediaOverride[k] || mediaByMode[k] || [];
-      if (slides.length < 2) return;
-      const id = setInterval(() => {
-        setIndices((prev) => ({
+    const id = setInterval(() => {
+      setHeroState((prev) => {
+        const sequence = sequenceModeKeys.length
+          ? sequenceModeKeys
+          : ["fullscreen"];
+        const currentLayout = sequence.includes(prev.layout)
+          ? prev.layout
+          : sequence[0];
+
+        const nextIndices = { ...prev.indices };
+        let nextLayout = currentLayout;
+        let nextHold = prev.hold || 1;
+        let nextBgColor = prev.bgColor;
+
+        if (autoMode && sequence.length > 1) {
+          if (nextHold >= modeHoldCount) {
+            const currentIdx = sequence.indexOf(currentLayout);
+            nextLayout = sequence[(currentIdx + 1) % sequence.length];
+            nextHold = 1;
+            nextBgColor = colors[rand(colors.length)];
+          } else {
+            nextHold += 1;
+
+            const currentSlides =
+              mediaOverride[currentLayout] || mediaByMode[currentLayout] || [];
+            if (currentSlides.length >= 2) {
+              nextIndices[currentLayout] =
+                ((prev.indices[currentLayout] || 0) + 1) % currentSlides.length;
+            }
+          }
+        } else {
+          const activeSlides =
+            mediaOverride[currentLayout] || mediaByMode[currentLayout] || [];
+          if (activeSlides.length >= 2) {
+            nextIndices[currentLayout] =
+              ((prev.indices[currentLayout] || 0) + 1) % activeSlides.length;
+          }
+          nextHold = 1;
+        }
+
+        return {
           ...prev,
-          [k]: ((prev[k] || 0) + 1) % slides.length,
-        }));
-      }, interval);
-      timers.push(id);
-    });
-    return () => timers.forEach(clearInterval);
-  }, [modeKeys, mediaByMode, mediaOverride, interval]);
+          indices: nextIndices,
+          layout: nextLayout,
+          hold: nextHold,
+          bgColor: nextBgColor,
+        };
+      });
+    }, beatMs);
 
-  // Auto-rotate layouts
-  useEffect(() => {
-    if (!autoMode || modeKeys.length <= 1) return;
-    let timeout;
-    const schedule = () => {
-      const delay = getLayoutDelay();
-      timeout = setTimeout(() => {
-        const others = modeKeys.filter((k) => k !== layout);
-        const next = others.length ? others[rand(others.length)] : layout;
-        setLayout(next);
-        setBgColor(colors[rand(colors.length)]);
-        schedule();
-      }, delay);
-    };
-    schedule();
-    return () => clearTimeout(timeout);
-  }, [autoMode, layout, modeKeys, layoutRangeMs, colors]);
+    return () => clearInterval(id);
+  }, [
+    beatMs,
+    autoMode,
+    modeKeys,
+    mediaByMode,
+    mediaOverride,
+    sequenceModeKeys,
+    modeHoldCount,
+    colors,
+  ]);
+
+  const { indices, layout, bgColor } = heroState;
 
   const plainBg = MODES[layout]?.plainBackground;
   const appliedBg = plainBg

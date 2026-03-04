@@ -55,19 +55,19 @@ export default async function Page() {
 
   return (
     <Hero
-      interval={7000}
+      beatMs={10000}
+      modeHoldCount={2}
       mode="auto"
-      layoutRangeMs={21000}
       darkenBg
       darkenFactor={0.5}
       colors={[
-        "#0ea5e9",
-        "#6366f1",
-        "#a78bfa",
-        "#f472b6",
-        "#fb7185",
-        "#34d399",
-        "#f59e0b",
+        "#223847",
+        "#2b3f56",
+        "#3a4152",
+        "#4a4050",
+        "#4d4640",
+        "#334b4b",
+        "#3f4a3a",
       ]}
       enabledModes={allModes.filter((m) => mediaOverride[m].length > 0)} // only enable modes that have slides
       mediaOverride={mediaOverride}
