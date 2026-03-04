@@ -55,8 +55,9 @@ export default async function Page() {
 
   return (
     <Hero
-      beatMs={10000}
+      beatMs={8000}
       modeHoldCount={2}
+      layoutSwitchExtraMs={500}
       mode="auto"
       darkenBg
       darkenFactor={0.5}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MODES } from "./hero/modes";
 import { getMediaByMode } from "../lib/heroData";
 import "./styles/hero.css"; // shared CSS with vars
@@ -7,6 +7,7 @@ import "./styles/hero.css"; // shared CSS with vars
 export default function Hero({
   beatMs = 10000,
   modeHoldCount = 2,
+  layoutSwitchExtraMs = 500,
   mode = "auto",
   colors = [
     "#0f77a7ff",
@@ -64,18 +65,73 @@ export default function Hero({
     return out;
   }, [modeKeys]);
 
+  const autoMode = mode === "auto" || mode === "random";
+  const rand = (n) => Math.floor(Math.random() * n);
+
+  const makeShuffledOrder = (len, avoidFirst = null) => {
+    const arr = Array.from({ length: len }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const j = rand(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+
+    if (avoidFirst instanceof Set && len > avoidFirst.size) {
+      let tries = 0;
+      while (tries < 8 && avoidFirst.has(arr[0])) {
+        for (let i = arr.length - 1; i > 0; i -= 1) {
+          const j = rand(i + 1);
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        tries += 1;
+      }
+    }
+
+    return arr;
+  };
+
+  const getSlides = (modeKey) => mediaOverride[modeKey] || mediaByMode[modeKey] || [];
+
+  const createPlaybackState = (keys) => {
+    const indices = {};
+    const orders = {};
+    const orderPos = {};
+    const tripleVisibleIndices = {};
+
+    keys.forEach((k) => {
+      const len = getSlides(k).length;
+      if (!len) {
+        indices[k] = 0;
+        orders[k] = [];
+        orderPos[k] = 0;
+        tripleVisibleIndices[k] = [];
+        return;
+      }
+
+      const order = makeShuffledOrder(len);
+      orders[k] = order;
+      orderPos[k] = 0;
+
+      if (k === "tripleColumn") {
+        const group = order.slice(0, Math.min(3, len));
+        tripleVisibleIndices[k] = group;
+        indices[k] = group[0] ?? 0;
+      } else {
+        indices[k] = order[0] ?? 0;
+        tripleVisibleIndices[k] = [];
+      }
+    });
+
+    return { indices, orders, orderPos, tripleVisibleIndices };
+  };
+
   // State
   const [heroState, setHeroState] = useState(() => ({
-    indices: Object.fromEntries(
-      (modeKeys.length ? modeKeys : ["fullscreen"]).map((k) => [k, 0])
-    ),
+    ...createPlaybackState(modeKeys.length ? modeKeys : ["fullscreen"]),
     layout: modeKeys[0] || "fullscreen",
     bgColor: "#000000",
     hold: 1,
   }));
-
-  const autoMode = mode === "auto" || mode === "random";
-  const rand = (n) => Math.floor(Math.random() * n);
+  const heroStateRef = useRef(heroState);
 
   const hexToRgb = (hex) => {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -103,12 +159,7 @@ export default function Hero({
   // Initial randomization on mount
   useEffect(() => {
     setHeroState((prev) => {
-      const nextIndices = { ...prev.indices };
-      modeKeys.forEach((k) => {
-        const slides = mediaOverride[k] || mediaByMode[k] || [];
-        const len = slides.length || 1;
-        nextIndices[k] = rand(len);
-      });
+      const playback = createPlaybackState(modeKeys);
 
       let nextLayout = prev.layout;
       if (sequenceModeKeys.length) {
@@ -122,7 +173,7 @@ export default function Hero({
       }
 
       return {
-        indices: nextIndices,
+        ...playback,
         layout: nextLayout,
         bgColor: colors[rand(colors.length)],
         hold: 1,
@@ -134,12 +185,7 @@ export default function Hero({
   // 🔧 Normalize when the available mode set changes (e.g., crossing lg breakpoint)
   useEffect(() => {
     setHeroState((prev) => {
-      const next = {};
-      modeKeys.forEach((k) => {
-        const slides = mediaOverride[k] || mediaByMode[k] || [];
-        const len = slides.length || 1;
-        next[k] = prev.indices[k] != null ? prev.indices[k] % len : 0;
-      });
+      const playback = createPlaybackState(modeKeys);
 
       const nextLayout = sequenceModeKeys.includes(prev.layout)
         ? prev.layout
@@ -147,7 +193,7 @@ export default function Hero({
 
       return {
         ...prev,
-        indices: next,
+        ...playback,
         layout: nextLayout,
         hold: 1,
       };
@@ -155,10 +201,20 @@ export default function Hero({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeKeys, sequenceModeKeys]);
 
+  useEffect(() => {
+    heroStateRef.current = heroState;
+  }, [heroState]);
+
   // Unified beat: image advance + optional layout rotation
   useEffect(() => {
-    const id = setInterval(() => {
-      setHeroState((prev) => {
+    let timeoutId;
+    let cancelled = false;
+
+    const runBeat = () => {
+      const prev = heroStateRef.current;
+      let switchedLayout = false;
+
+      const next = (() => {
         const sequence = sequenceModeKeys.length
           ? sequenceModeKeys
           : ["fullscreen"];
@@ -167,6 +223,9 @@ export default function Hero({
           : sequence[0];
 
         const nextIndices = { ...prev.indices };
+        const nextOrders = { ...prev.orders };
+        const nextOrderPos = { ...prev.orderPos };
+        const nextTripleVisible = { ...prev.tripleVisibleIndices };
         let nextLayout = currentLayout;
         let nextHold = prev.hold || 1;
         let nextBgColor = prev.bgColor;
@@ -177,37 +236,157 @@ export default function Hero({
             nextLayout = sequence[(currentIdx + 1) % sequence.length];
             nextHold = 1;
             nextBgColor = colors[rand(colors.length)];
+            switchedLayout = true;
           } else {
             nextHold += 1;
 
-            const currentSlides =
-              mediaOverride[currentLayout] || mediaByMode[currentLayout] || [];
-            if (currentSlides.length >= 2) {
-              nextIndices[currentLayout] =
-                ((prev.indices[currentLayout] || 0) + 1) % currentSlides.length;
+            const currentSlides = getSlides(currentLayout);
+            const len = currentSlides.length;
+
+            if (currentLayout === "tripleColumn") {
+              if (len >= 3) {
+                const order =
+                  Array.isArray(prev.orders[currentLayout]) &&
+                  prev.orders[currentLayout].length === len
+                    ? prev.orders[currentLayout]
+                    : makeShuffledOrder(len);
+                const pos = Number.isInteger(prev.orderPos[currentLayout])
+                  ? prev.orderPos[currentLayout]
+                  : 0;
+                const prevGroup = Array.isArray(prev.tripleVisibleIndices[currentLayout])
+                  ? prev.tripleVisibleIndices[currentLayout]
+                  : [];
+
+                let nextPos = pos + 3;
+                let nextOrder = order;
+                let nextGroup;
+
+                if (nextPos <= len - 3) {
+                  nextGroup = nextOrder.slice(nextPos, nextPos + 3);
+                } else {
+                  const prevSet = new Set(prevGroup);
+                  nextOrder = makeShuffledOrder(len, prevSet);
+                  nextPos = 0;
+                  nextGroup = nextOrder.slice(0, 3);
+                }
+
+                nextOrders[currentLayout] = nextOrder;
+                nextOrderPos[currentLayout] = nextPos;
+                nextTripleVisible[currentLayout] = nextGroup;
+                nextIndices[currentLayout] = nextGroup[0] ?? 0;
+              }
+            } else if (len >= 2) {
+              const order =
+                Array.isArray(prev.orders[currentLayout]) &&
+                prev.orders[currentLayout].length === len
+                  ? prev.orders[currentLayout]
+                  : makeShuffledOrder(len);
+              const pos = Number.isInteger(prev.orderPos[currentLayout])
+                ? prev.orderPos[currentLayout]
+                : 0;
+
+              let nextPos = pos + 1;
+              let nextOrder = order;
+              if (nextPos >= len) {
+                const avoidFirst = new Set([order[len - 1]]);
+                nextOrder = makeShuffledOrder(len, avoidFirst);
+                nextPos = 0;
+              }
+
+              nextOrders[currentLayout] = nextOrder;
+              nextOrderPos[currentLayout] = nextPos;
+              nextIndices[currentLayout] = nextOrder[nextPos] ?? 0;
             }
           }
         } else {
-          const activeSlides =
-            mediaOverride[currentLayout] || mediaByMode[currentLayout] || [];
-          if (activeSlides.length >= 2) {
-            nextIndices[currentLayout] =
-              ((prev.indices[currentLayout] || 0) + 1) % activeSlides.length;
+          const activeSlides = getSlides(currentLayout);
+          const len = activeSlides.length;
+
+          if (currentLayout === "tripleColumn") {
+            if (len >= 3) {
+              const order =
+                Array.isArray(prev.orders[currentLayout]) &&
+                prev.orders[currentLayout].length === len
+                  ? prev.orders[currentLayout]
+                  : makeShuffledOrder(len);
+              const pos = Number.isInteger(prev.orderPos[currentLayout])
+                ? prev.orderPos[currentLayout]
+                : 0;
+              let nextPos = pos + 3;
+              let nextOrder = order;
+              let nextGroup;
+
+              if (nextPos <= len - 3) {
+                nextGroup = nextOrder.slice(nextPos, nextPos + 3);
+              } else {
+                const prevSet = new Set(prev.tripleVisibleIndices[currentLayout] || []);
+                nextOrder = makeShuffledOrder(len, prevSet);
+                nextPos = 0;
+                nextGroup = nextOrder.slice(0, 3);
+              }
+
+              nextOrders[currentLayout] = nextOrder;
+              nextOrderPos[currentLayout] = nextPos;
+              nextTripleVisible[currentLayout] = nextGroup;
+              nextIndices[currentLayout] = nextGroup[0] ?? 0;
+            }
+          } else if (len >= 2) {
+            const order =
+              Array.isArray(prev.orders[currentLayout]) &&
+              prev.orders[currentLayout].length === len
+                ? prev.orders[currentLayout]
+                : makeShuffledOrder(len);
+            const pos = Number.isInteger(prev.orderPos[currentLayout])
+              ? prev.orderPos[currentLayout]
+              : 0;
+
+            let nextPos = pos + 1;
+            let nextOrder = order;
+            if (nextPos >= len) {
+              const avoidFirst = new Set([order[len - 1]]);
+              nextOrder = makeShuffledOrder(len, avoidFirst);
+              nextPos = 0;
+            }
+
+            nextOrders[currentLayout] = nextOrder;
+            nextOrderPos[currentLayout] = nextPos;
+            nextIndices[currentLayout] = nextOrder[nextPos] ?? 0;
           }
+
           nextHold = 1;
         }
 
         return {
           ...prev,
           indices: nextIndices,
+          orders: nextOrders,
+          orderPos: nextOrderPos,
+          tripleVisibleIndices: nextTripleVisible,
           layout: nextLayout,
           hold: nextHold,
           bgColor: nextBgColor,
         };
-      });
+      })();
+
+      heroStateRef.current = next;
+      setHeroState(next);
+
+      const nextDelay = switchedLayout
+        ? beatMs + layoutSwitchExtraMs
+        : beatMs;
+      timeoutId = window.setTimeout(() => {
+        if (!cancelled) runBeat();
+      }, nextDelay);
+    };
+
+    timeoutId = window.setTimeout(() => {
+      if (!cancelled) runBeat();
     }, beatMs);
 
-    return () => clearInterval(id);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [
     beatMs,
     autoMode,
@@ -216,10 +395,11 @@ export default function Hero({
     mediaOverride,
     sequenceModeKeys,
     modeHoldCount,
+    layoutSwitchExtraMs,
     colors,
   ]);
 
-  const { indices, layout, bgColor } = heroState;
+  const { indices, layout, bgColor, tripleVisibleIndices } = heroState;
 
   const plainBg = MODES[layout]?.plainBackground;
   const appliedBg = plainBg
@@ -255,6 +435,7 @@ export default function Hero({
             key={key}
             slides={slides}
             activeIndex={indices[key] || 0}
+            visibleIndices={tripleVisibleIndices[key]}
             active={layout === key}
           />
         );

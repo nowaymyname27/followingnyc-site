@@ -4,8 +4,8 @@ import React from "react";
 export default function TripleColumnMode({
   slides = [],
   activeIndex = 0,
+  visibleIndices,
   active = false,
-  stepSize = 3, // how many new images per transition
 }) {
   // Normalize slides (strings still work)
   const norm = (it, i) =>
@@ -21,16 +21,13 @@ export default function TripleColumnMode({
   const S = (slides || []).map(norm);
   const len = S.length || 1;
 
-  // Advance in "pages" of 3 so each transition shows 3 new images.
-  // Example: page 0 -> [0,1,2], page 1 -> [3,4,5], etc., wrapping cleanly.
-  const page = Math.floor(activeIndex / stepSize);
-  const start = (page * stepSize) % len;
+  const start = ((activeIndex % len) + len) % len;
 
-  // Build up to 3 unique indices for the columns, wrapping and skipping dups
-  const colIdx = [];
-  for (let k = 0; k < Math.min(3, len); k++) {
-    colIdx.push((start + k) % len);
-  }
+  const colIdx = Array.isArray(visibleIndices) && visibleIndices.length
+    ? [...new Set(visibleIndices)]
+        .filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < len)
+        .slice(0, Math.min(3, len))
+    : Array.from({ length: Math.min(3, len) }, (_, k) => (start + k) % len);
 
   return (
     <div
